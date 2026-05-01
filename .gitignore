@@ -1,0 +1,16 @@
+# Gradle / Android build outputs
+.gradle/
+build/
+app/build/
+
+# IDE / local machine files
+.idea/
+*.iml
+local.properties
+
+# Runtime logs and captures
+*.log
+cmreborn_runtime*.log
+
+# Private reverse-engineering workspace (not for public repo)
+analysis/
