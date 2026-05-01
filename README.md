@@ -18,6 +18,17 @@ LSPosed/Xposed module for Google Messages (`com.google.android.apps.messaging`) 
 - Conversation notification toggle on archive/unarchive
 - Conversation-channel migration fallback for notification restoration
 
+## Simple Usage Instructions
+- Install CMReborn v1.1.0 APK
+- Enable module in LSPosed/Vector
+- Hook to only Google Messages
+- Open Google Messages > Tap Search > Type helloworld (that's your covert message box)
+- Archiving any message thread puts it there, with muted notifications
+- Unarchiving puts the thread back in Main inbox with notifications re-enabled
+- Archive Tab hidden from Profile page
+- Removed Search bar Suggestion Boxes
+- Searching Archived message threads/contacts does not show up in Search
+
 ## Backend Function Map
 
 | Functionality | Backend implementation (high level) |
