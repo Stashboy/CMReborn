@@ -11,7 +11,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="CM Reborn module for Google Messages" />
+            android:value="CM Reborn" />
         <meta-data
             android:name="xposedminversion"
             android:value="93" />
