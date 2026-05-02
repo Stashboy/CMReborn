@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,8 +93,46 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final String ATTACHMENT_BUILDER_BVOC = "bvoc";
 
     private static final String[] OVERFLOW_HANDLER_CLASS_CANDIDATES = {"albk", "alak"};
-    private static final String[] SEARCH_FRAGMENT_CLASS_CANDIDATES = {"dpzk", "dpth"};
-    private static final String[] SEARCH_CATEGORY_SOURCE_CLASS_CANDIDATES = {"dqaq", "dpun"};
+    private static final String[] SEARCH_FRAGMENT_CLASS_CANDIDATES = {"dpza", "dpzk", "dpth"};
+    private static final String[] SEARCH_CATEGORY_SOURCE_CLASS_CANDIDATES = {"dqag", "dqaq", "dpun"};
+    private static final String[] SEARCH_VIEW_DATA_FILTER_HANDLER_CLASS_CANDIDATES = {
+            "dqbx",
+            "dqch"
+    };
+    private static final String[] SEARCH_VIEW_DATA_SOURCE_CLASS_CANDIDATES = {"cldd", "cldn"};
+    private static final String[] SEARCH_VIEW_DATA_CLASS_CANDIDATES = {"dqbz", "dqcj"};
+    private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES = {"dqbs", "dqcc"};
+    private static final String[] SEARCH_CONVERSATION_LIST_ADAPTER_CLASS_CANDIDATES = {
+            "dqgj",
+            "dqgt"
+    };
+    private static final String[] SEARCH_STARRED_LIST_ADAPTER_CLASS_CANDIDATES = {
+            "dqgp",
+            "dqgz"
+    };
+    private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES = {"dpzv", "dqaf"};
+    private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_CLASS_CANDIDATES = {
+            "dqdo",
+            "dqdy"
+    };
+    private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES = {
+            "dpzl",
+            "dpzv"
+    };
+    private static final String[] SEARCH_CONTACT_SELECTION_DISPATCH_HANDLER_CLASS_CANDIDATES = {
+            "dpzn",
+            "dpzx"
+    };
+    private static final String[] SEARCH_CONTACT_SELECTION_EVENT_CLASS_CANDIDATES = {
+            "fbrx",
+            "fbsh"
+    };
+    private static final String[] SEARCH_CONTACT_SELECTION_DONE_CLASS_CANDIDATES = {
+            "fbsa",
+            "fbsk"
+    };
+    private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES = {"fdju", "fdke"};
+    private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES = {"fdlo", "fdsh"};
     private static final String[] SEARCH_OPS_CLASS_CANDIDATES = {"cleu", "ckzs"};
     private static final String[] SEARCH_FILTER_CLASS_CANDIDATES = {"clcz", "ckxx"};
     private static final String[] SEARCH_BUILDER_CLASS_CANDIDATES = {"bpeb", "bozc"};
@@ -108,19 +147,24 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     };
     private static final String[] QUERY_BUILDER_BASE_CLASS_CANDIDATES = {"eiou", "eije"};
     private static final String[] QUERY_CLAUSE_BASE_CLASS_CANDIDATES = {"eiov", "eijf"};
-    private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES = {"cidm", "chyn"};
-    private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES = {"feov", "feip"};
-    private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES = {"fdke", "fddy"};
-    private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES = {"dflv", "dffv"};
-    private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES = {"bmuy", "bmqh"};
-    private static final String[] CONVERSATIONS_TABLE_CLASS_CANDIDATES = {"cboc", "cbjd"};
-    private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES = {"eyzy", "eytw"};
+    private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES = {"cidc", "cidm", "chyn"};
+    private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES = {"feol", "feov", "feip"};
+    private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES = {"fdju", "fdke", "fddy"};
+    private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES = {"dfll", "dflj", "dflv", "dffv"};
+    private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES = {
+            "bmuo",
+            "bmuy",
+            "bmqh"
+    };
+    private static final String[] CONVERSATIONS_TABLE_CLASS_CANDIDATES = {"cbns", "cboc", "cbjd"};
+    private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES = {"eyzo", "eyzy", "eytw"};
     private static final String[] PROFILE_ARCHIVED_ACTION_CLASS_CANDIDATES = {"akir", "akhr"};
     private static final String[] PROFILE_ARCHIVED_VISIBILITY_HANDLER_CLASS_CANDIDATES = {
             "aknb",
             "akmb"
     };
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES = {
+            "dmvw",
             "dmwg",
             "dmqe"
     };
@@ -633,28 +677,42 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static void hookSearchConversationViewDataFilter(ClassLoader classLoader) {
-        try {
-            final Class<?> searchResultClass = XposedHelpers.findClass("cldn", classLoader);
-            XposedHelpers.findAndHookMethod("dqch", classLoader, "a", searchResultClass,
-                    String.class, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                Object filtered = filterArchivedConversationViewData(
-                                        param.getResult(), param.thisObject.getClass()
-                                                .getClassLoader());
-                                if (filtered != param.getResult()) {
-                                    param.setResult(filtered);
+        boolean hooked = false;
+        for (String handlerClass : SEARCH_VIEW_DATA_FILTER_HANDLER_CLASS_CANDIDATES) {
+            for (String sourceClass : SEARCH_VIEW_DATA_SOURCE_CLASS_CANDIDATES) {
+                try {
+                    final Class<?> searchResultClass = XposedHelpers.findClass(sourceClass,
+                            classLoader);
+                    XposedHelpers.findAndHookMethod(handlerClass, classLoader, "a",
+                            searchResultClass, String.class, new XC_MethodHook() {
+                                @Override
+                                protected void afterHookedMethod(MethodHookParam param) {
+                                    try {
+                                        Object filtered = filterArchivedConversationViewData(
+                                                param.getResult(), param.thisObject.getClass()
+                                                        .getClassLoader());
+                                        if (filtered != param.getResult()) {
+                                            param.setResult(filtered);
+                                        }
+                                    } catch (Throwable t) {
+                                        logThrowable("search conversation view-data filter failed",
+                                                t);
+                                    }
                                 }
-                            } catch (Throwable t) {
-                                logThrowable("search conversation view-data filter failed", t);
-                            }
-                        }
-                    });
-            log("hook installed: dqch.a(cldn,String) search view-data archive filter");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dqch.a(cldn,String)", t);
+                            });
+                    log("hook installed: " + handlerClass + ".a(" + sourceClass
+                            + ",String) search view-data archive filter");
+                    hooked = true;
+                    break;
+                } catch (Throwable ignored) {
+                    // Try next class pair.
+                }
+            }
+            if (hooked) {
+                return;
+            }
         }
+        log("hook unavailable: search conversation view-data filter signatures not found");
     }
 
     private static Object filterArchivedConversationViewData(Object viewData, ClassLoader classLoader) {
@@ -695,10 +753,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 return viewData;
             }
 
-            Class<?> dqcjConcreteClass = XposedHelpers.findClass("dqcc", classLoader);
-            Object rebuilt = XposedHelpers.newInstance(dqcjConcreteClass,
+            Object rebuilt = rebuildConversationViewData(viewData,
                     starredFiltered.filtered, conversationFiltered.filtered,
-                    noMatchingFiltered.filtered, semanticFiltered.filtered);
+                    noMatchingFiltered.filtered, semanticFiltered.filtered, classLoader);
+            if (rebuilt == viewData) {
+                log("search conversation view-data rebuild unavailable; preserving original result");
+                return viewData;
+            }
             log("search conversation view-data archive filter applied; removed=" + removed);
             return rebuilt;
         } catch (Throwable t) {
@@ -747,8 +808,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (removed <= 0) {
             return new FilterListResult(original, 0);
         }
-        Object rebuilt = XposedHelpers.callStaticMethod(
-                XposedHelpers.findClass("fdke", classLoader), "n", kept);
+        Object rebuilt = rebuildImmutableListLike(maybeList, kept, classLoader);
         if (ENABLE_DEBUG_LOGS) {
             log(source + " filtered archived entries removed=" + removed);
         }
@@ -777,8 +837,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (removed <= 0) {
             return new FilterSetResult(original, 0);
         }
-        Object rebuilt = XposedHelpers.callStaticMethod(
-                XposedHelpers.findClass("fdly", classLoader), "n", kept);
+        Object rebuilt = rebuildImmutableSetLike(maybeSet, kept, classLoader);
         if (ENABLE_DEBUG_LOGS) {
             log(source + " filtered archived entries removed=" + removed);
         }
@@ -841,6 +900,154 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         return null;
     }
 
+    private static Object rebuildConversationViewData(Object originalViewData, Object starred,
+            Object conversationList, Object noMatchingParts, Object semantic, ClassLoader classLoader) {
+        Object[] args = {starred, conversationList, noMatchingParts, semantic};
+        Object rebuilt = tryInstantiateWithMatchingConstructor(
+                originalViewData != null ? originalViewData.getClass() : null, args);
+        if (rebuilt != null) {
+            return rebuilt;
+        }
+        for (String className : SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES) {
+            try {
+                Class<?> candidate = XposedHelpers.findClass(className, classLoader);
+                rebuilt = tryInstantiateWithMatchingConstructor(candidate, args);
+                if (rebuilt != null) {
+                    return rebuilt;
+                }
+            } catch (Throwable ignored) {
+                // Try next concrete candidate.
+            }
+        }
+        return originalViewData;
+    }
+
+    private static Object tryInstantiateWithMatchingConstructor(Class<?> targetClass, Object[] args) {
+        if (targetClass == null || args == null) {
+            return null;
+        }
+        try {
+            for (Constructor<?> constructor : targetClass.getDeclaredConstructors()) {
+                Class<?>[] parameterTypes = constructor.getParameterTypes();
+                if (parameterTypes.length != args.length) {
+                    continue;
+                }
+                if (!constructorArgsMatch(parameterTypes, args)) {
+                    continue;
+                }
+                constructor.setAccessible(true);
+                return constructor.newInstance(args);
+            }
+        } catch (Throwable ignored) {
+            // Fall back to other concrete class candidates.
+        }
+        return null;
+    }
+
+    private static boolean constructorArgsMatch(Class<?>[] parameterTypes, Object[] args) {
+        if (parameterTypes == null || args == null || parameterTypes.length != args.length) {
+            return false;
+        }
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (!isParameterCompatible(parameterTypes[i], args[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isParameterCompatible(Class<?> parameterType, Object arg) {
+        if (parameterType == null) {
+            return false;
+        }
+        if (arg == null) {
+            return !parameterType.isPrimitive();
+        }
+        if (parameterType.isInstance(arg)) {
+            return true;
+        }
+        if (!parameterType.isPrimitive()) {
+            return false;
+        }
+        return (parameterType == boolean.class && arg instanceof Boolean)
+                || (parameterType == byte.class && arg instanceof Byte)
+                || (parameterType == short.class && arg instanceof Short)
+                || (parameterType == int.class && arg instanceof Integer)
+                || (parameterType == long.class && arg instanceof Long)
+                || (parameterType == float.class && arg instanceof Float)
+                || (parameterType == double.class && arg instanceof Double)
+                || (parameterType == char.class && arg instanceof Character);
+    }
+
+    private static Object rebuildImmutableListLike(Object originalCollection,
+            java.util.Collection<Object> kept, ClassLoader classLoader) {
+        Object rebuilt = rebuildImmutableCollectionLike(originalCollection, kept, classLoader,
+                IMMUTABLE_LIST_CLASS_CANDIDATES);
+        return rebuilt != null ? rebuilt : new java.util.ArrayList<>(kept);
+    }
+
+    private static Object rebuildImmutableSetLike(Object originalCollection,
+            java.util.Collection<Object> kept, ClassLoader classLoader) {
+        Object rebuilt = rebuildImmutableCollectionLike(originalCollection, kept, classLoader,
+                IMMUTABLE_SET_CLASS_CANDIDATES);
+        return rebuilt != null ? rebuilt : new java.util.LinkedHashSet<>(kept);
+    }
+
+    private static Object rebuildImmutableCollectionLike(Object originalCollection,
+            java.util.Collection<Object> kept, ClassLoader classLoader, String[] classCandidates) {
+        if (kept == null) {
+            return null;
+        }
+        if (originalCollection != null) {
+            Object rebuilt = callCollectionFactoryMethods(originalCollection.getClass(), kept);
+            if (rebuilt != null) {
+                return rebuilt;
+            }
+        }
+        if (classLoader == null || classCandidates == null) {
+            return null;
+        }
+        for (String className : classCandidates) {
+            try {
+                Class<?> candidate = XposedHelpers.findClass(className, classLoader);
+                Object rebuilt = callCollectionFactoryMethods(candidate, kept);
+                if (rebuilt != null) {
+                    return rebuilt;
+                }
+            } catch (Throwable ignored) {
+                // Try next candidate collection class.
+            }
+        }
+        return null;
+    }
+
+    private static Object callCollectionFactoryMethods(Class<?> factoryClass,
+            java.util.Collection<Object> values) {
+        if (factoryClass == null || values == null) {
+            return null;
+        }
+        String[] factoryMethodNames = {"n", "o", "j"};
+        for (String methodName : factoryMethodNames) {
+            try {
+                return XposedHelpers.callStaticMethod(factoryClass, methodName, values);
+            } catch (Throwable ignored) {
+                // Try next factory method.
+            }
+        }
+        Object[] array = values.toArray();
+        try {
+            return XposedHelpers.callStaticMethod(factoryClass, "i", array, array.length);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            return XposedHelpers.callStaticMethod(factoryClass, "p", array);
+        } catch (Throwable ignored) {
+            // No compatible collection factory in this class.
+        }
+        return null;
+    }
+
     private static final class FilterListResult {
         final Object filtered;
         final int removed;
@@ -865,59 +1072,60 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static void hookSearchResultAdapters(ClassLoader classLoader) {
         final Class<?> viewDataClass;
         try {
-            viewDataClass = XposedHelpers.findClass("dqcj", classLoader);
+            viewDataClass = findClassAny(classLoader, SEARCH_VIEW_DATA_CLASS_CANDIDATES);
+            if (viewDataClass == null) {
+                log("hook unavailable: search results adapter view-data class not found");
+                return;
+            }
         } catch (Throwable t) {
-            logThrowable("hook failed: search results adapter dqcj class resolution", t);
+            logThrowable("hook failed: search results adapter view-data class resolution", t);
             return;
         }
 
-        try {
-            XposedHelpers.findAndHookMethod("dqgt", classLoader, "F", viewDataClass,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                Object filtered = filterArchivedConversationViewData(param.args[0],
-                                        param.thisObject.getClass().getClassLoader());
-                                if (filtered != param.args[0]) {
-                                    param.args[0] = filtered;
-                                    if (ENABLE_DEBUG_LOGS) {
-                                        log("search results adapter conversation filter applied: dqgt.F");
-                                    }
-                                }
-                            } catch (Throwable t) {
-                                logThrowable("search results adapter filter failed: dqgt.F", t);
-                            }
-                        }
-                    });
-            log("hook installed: dqgt.F(dqcj) archived-result UI filter");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dqgt.F(dqcj)", t);
-        }
+        hookSearchResultAdapter(classLoader, SEARCH_CONVERSATION_LIST_ADAPTER_CLASS_CANDIDATES,
+                viewDataClass, "search conversation list adapter");
+        hookSearchResultAdapter(classLoader, SEARCH_STARRED_LIST_ADAPTER_CLASS_CANDIDATES,
+                viewDataClass, "search starred-message adapter");
+    }
 
-        try {
-            XposedHelpers.findAndHookMethod("dqgz", classLoader, "F", viewDataClass,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                Object filtered = filterArchivedConversationViewData(param.args[0],
-                                        param.thisObject.getClass().getClassLoader());
-                                if (filtered != param.args[0]) {
-                                    param.args[0] = filtered;
-                                    if (ENABLE_DEBUG_LOGS) {
-                                        log("search results adapter conversation filter applied: dqgz.F");
-                                    }
-                                }
-                            } catch (Throwable t) {
-                                logThrowable("search results adapter filter failed: dqgz.F", t);
-                            }
-                        }
-                    });
-            log("hook installed: dqgz.F(dqcj) archived-result UI filter");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dqgz.F(dqcj)", t);
+    private static void hookSearchResultAdapter(ClassLoader classLoader, String[] classCandidates,
+            Class<?> viewDataClass, final String sourceLabel) {
+        if (classCandidates == null || viewDataClass == null) {
+            return;
         }
+        for (String className : classCandidates) {
+            try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "F", viewDataClass,
+                        new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) {
+                                try {
+                                    Object filtered = filterArchivedConversationViewData(
+                                            param.args[0],
+                                            param.thisObject.getClass().getClassLoader());
+                                    if (filtered != param.args[0]) {
+                                        param.args[0] = filtered;
+                                        if (ENABLE_DEBUG_LOGS) {
+                                            log(sourceLabel
+                                                    + " conversation filter applied: "
+                                                    + param.thisObject.getClass().getSimpleName()
+                                                    + ".F");
+                                        }
+                                    }
+                                } catch (Throwable t) {
+                                    logThrowable(sourceLabel + " archive filter failed", t);
+                                }
+                            }
+                        });
+                log("hook installed: " + className + ".F("
+                        + viewDataClass.getSimpleName() + ") " + sourceLabel
+                        + " archived-result UI filter");
+                return;
+            } catch (Throwable ignored) {
+                // Try next adapter candidate.
+            }
+        }
+        log("hook unavailable: " + sourceLabel + " F(viewData) signature not found");
     }
 
     @SuppressWarnings("unchecked")
@@ -981,167 +1189,204 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static void hookSearchSuggestionContactFilter(ClassLoader classLoader) {
-        try {
-            XposedHelpers.findAndHookMethod("dqaf", classLoader, "performFiltering",
-                    CharSequence.class, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            try {
-                                Object filterResults = param.getResult();
-                                if (filterResults == null) {
-                                    return;
+        for (String className : SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES) {
+            try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "performFiltering",
+                        CharSequence.class, new XC_MethodHook() {
+                            @Override
+                            protected void afterHookedMethod(MethodHookParam param) {
+                                try {
+                                    Object filterResults = param.getResult();
+                                    if (filterResults == null) {
+                                        return;
+                                    }
+                                    Object valuesObj = XposedHelpers.getObjectField(filterResults,
+                                            "values");
+                                    if (!(valuesObj instanceof java.util.List)) {
+                                        return;
+                                    }
+                                    @SuppressWarnings("unchecked")
+                                    java.util.List<Object> values =
+                                            (java.util.List<Object>) valuesObj;
+                                    java.util.List<?> filtered =
+                                            filterArchivedSearchFilterDataItems(
+                                                    values, param.thisObject.getClass()
+                                                            .getClassLoader(),
+                                                    "search suggestions");
+                                    if (filtered == values) {
+                                        return;
+                                    }
+                                    XposedHelpers.setObjectField(filterResults, "values",
+                                            filtered);
+                                    XposedHelpers.setIntField(filterResults, "count",
+                                            filtered.size());
+                                    param.setResult(filterResults);
+                                    if (ENABLE_DEBUG_LOGS) {
+                                        log("search suggestions filtered archived participant entries");
+                                    }
+                                } catch (Throwable t) {
+                                    logThrowable("search suggestions archive filter failed", t);
                                 }
-                                Object valuesObj = XposedHelpers.getObjectField(filterResults,
-                                        "values");
-                                if (!(valuesObj instanceof java.util.List)) {
-                                    return;
-                                }
-                                @SuppressWarnings("unchecked")
-                                java.util.List<Object> values =
-                                        (java.util.List<Object>) valuesObj;
-                                java.util.List<?> filtered = filterArchivedSearchFilterDataItems(
-                                        values, param.thisObject.getClass().getClassLoader(),
-                                        "search suggestions");
-                                if (filtered == values) {
-                                    return;
-                                }
-                                XposedHelpers.setObjectField(filterResults, "values", filtered);
-                                XposedHelpers.setIntField(filterResults, "count", filtered.size());
-                                param.setResult(filterResults);
-                                if (ENABLE_DEBUG_LOGS) {
-                                    log("search suggestions filtered archived participant entries");
-                                }
-                            } catch (Throwable t) {
-                                logThrowable("search suggestions archive filter failed", t);
                             }
-                        }
-                    });
-            log("hook installed: dqaf.performFiltering(CharSequence) archived-suggestion filter");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dqaf.performFiltering(CharSequence)", t);
+                        });
+                log("hook installed: " + className
+                        + ".performFiltering(CharSequence) archived-suggestion filter");
+                return;
+            } catch (Throwable ignored) {
+                // Try next suggestion-filter candidate.
+            }
         }
+        log("hook unavailable: search suggestion filter class not found");
     }
 
     private static void hookSearchContactResultsFilter(ClassLoader classLoader) {
-        try {
-            XposedHelpers.findAndHookMethod("dqdy", classLoader, "l", java.util.List.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            try {
-                                Object arg = param.args[0];
-                                if (!(arg instanceof java.util.List)) {
-                                    return;
+        for (String className : SEARCH_CONTACT_RESULTS_ADAPTER_CLASS_CANDIDATES) {
+            try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "l", java.util.List.class,
+                        new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) {
+                                try {
+                                    Object arg = param.args[0];
+                                    if (!(arg instanceof java.util.List)) {
+                                        return;
+                                    }
+                                    java.util.List<?> filtered = filterArchivedContactRows(
+                                            (java.util.List<?>) arg,
+                                            param.thisObject.getClass().getClassLoader(),
+                                            "search contact results");
+                                    if (filtered != arg) {
+                                        param.args[0] = filtered;
+                                    }
+                                } catch (Throwable t) {
+                                    logThrowable("search contact-results archive filter failed",
+                                            t);
                                 }
-                                java.util.List<?> filtered = filterArchivedContactRows(
-                                        (java.util.List<?>) arg,
-                                        param.thisObject.getClass().getClassLoader(),
-                                        "search contact results");
-                                if (filtered != arg) {
-                                    param.args[0] = filtered;
-                                }
-                            } catch (Throwable t) {
-                                logThrowable("search contact-results archive filter failed", t);
                             }
-                        }
-                    });
-            log("hook installed: dqdy.l(List) archived-contact-result filter");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dqdy.l(List)", t);
+                        });
+                log("hook installed: " + className + ".l(List) archived-contact-result filter");
+                return;
+            } catch (Throwable ignored) {
+                // Try next contact-result adapter candidate.
+            }
         }
+        log("hook unavailable: search contact results adapter class not found");
     }
 
     private static void hookSearchContactTapBehavior(ClassLoader classLoader) {
-        try {
-            XposedHelpers.findAndHookMethod("dpzv", classLoader, "c", Object.class, Object.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            Object[] args = param.args;
-                            if (args == null || args.length < 2) {
-                                return;
-                            }
-                            Object recipient = args[0];
-                            Object isParticipantObj = args[1];
-                            if (!(isParticipantObj instanceof Boolean)
-                                    || !((Boolean) isParticipantObj).booleanValue()) {
-                                return;
-                            }
-                            if (recipient == null) {
-                                return;
-                            }
+        for (String className : SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES) {
+            try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "c", Object.class,
+                        Object.class, new XC_MethodHook() {
+                            @Override
+                            protected void beforeHookedMethod(MethodHookParam param) {
+                                Object[] args = param.args;
+                                if (args == null || args.length < 2) {
+                                    return;
+                                }
+                                Object recipient = args[0];
+                                Object isParticipantObj = args[1];
+                                if (!(isParticipantObj instanceof Boolean)
+                                        || !((Boolean) isParticipantObj).booleanValue()) {
+                                    return;
+                                }
+                                if (recipient == null) {
+                                    return;
+                                }
 
-                            String participantLookupKey = null;
-                            try {
-                                Object twp = XposedHelpers.callMethod(recipient, "f");
-                                Object keyObj = twp != null
-                                        ? readFieldIfPresent(twp, "k")
-                                        : null;
-                                participantLookupKey = keyObj instanceof String
-                                        ? (String) keyObj
-                                        : null;
-                            } catch (Throwable t) {
-                                logThrowable("search contact tap lookup-key read failed", t);
-                            }
+                                String participantLookupKey = null;
+                                try {
+                                    Object twp = XposedHelpers.callMethod(recipient, "f");
+                                    Object keyObj = twp != null
+                                            ? readFieldIfPresent(twp, "k")
+                                            : null;
+                                    participantLookupKey = keyObj instanceof String
+                                            ? (String) keyObj
+                                            : null;
+                                } catch (Throwable t) {
+                                    logThrowable("search contact tap lookup-key read failed", t);
+                                }
 
-                            boolean archivedOnly = isParticipantLookupKeyArchivedOnly(
-                                    participantLookupKey,
-                                    param.thisObject.getClass().getClassLoader(), null);
-                            if (archivedOnly) {
-                                log("blocked archived-only contact search tap; participant_lookup_key="
+                                boolean archivedOnly = isParticipantLookupKeyArchivedOnly(
+                                        participantLookupKey,
+                                        param.thisObject.getClass().getClassLoader(), null);
+                                if (archivedOnly) {
+                                    log("blocked archived-only contact search tap; participant_lookup_key="
+                                            + participantLookupKey);
+                                    param.setResult(null);
+                                    return;
+                                }
+                                param.args[1] = Boolean.FALSE;
+                                log("rerouted participant contact search tap to direct-open branch; participant_lookup_key="
                                         + participantLookupKey);
-                                param.setResult(null);
-                                return;
                             }
-                            param.args[1] = Boolean.FALSE;
-                            log("rerouted participant contact search tap to direct-open branch; participant_lookup_key="
-                                    + participantLookupKey);
-                        }
-                    });
-            log("hook installed: dpzv.c(Object,Object) contact tap open/block policy");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dpzv.c(Object,Object)", t);
+                        });
+                log("hook installed: " + className
+                        + ".c(Object,Object) contact tap open/block policy");
+                return;
+            } catch (Throwable ignored) {
+                // Try next contact tap handler candidate.
+            }
         }
+        log("hook unavailable: search contact tap handler class not found");
     }
 
     private static void hookSearchContactSelectionDispatchGuard(ClassLoader classLoader) {
-        try {
-            Class<?> fbshClass = XposedHelpers.findClass("fbsh", classLoader);
-            final Object fbskDone = XposedHelpers.getStaticObjectField(
-                    XposedHelpers.findClass("fbsk", classLoader), "a");
-            XposedHelpers.findAndHookMethod("dpzx", classLoader, "a", fbshClass,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            Object fbshEvent = param.args != null && param.args.length > 0
-                                    ? param.args[0]
-                                    : null;
-                            if (fbshEvent == null) {
-                                return;
-                            }
-                            String participantLookupKey = null;
-                            try {
-                                Object bmha = readFieldIfPresent(fbshEvent, "a");
-                                Object keyObj = readFieldIfPresent(bmha, "c");
-                                participantLookupKey = keyObj instanceof String
-                                        ? (String) keyObj
-                                        : null;
-                            } catch (Throwable t) {
-                                logThrowable("search contact selection dispatch key read failed", t);
-                            }
-                            if (!isParticipantLookupKeyArchivedOnly(participantLookupKey,
-                                    param.thisObject.getClass().getClassLoader(), null)) {
-                                return;
-                            }
-                            log("blocked archived-only contact selection dispatch; participant_lookup_key="
-                                    + participantLookupKey);
-                            param.setResult(fbskDone);
-                        }
-                    });
-            log("hook installed: dpzx.a(fbsh) archived contact selection guard");
-        } catch (Throwable t) {
-            logThrowable("hook failed: dpzx.a(fbsh)", t);
+        for (String doneClassName : SEARCH_CONTACT_SELECTION_DONE_CLASS_CANDIDATES) {
+            final Object dispatchDoneToken;
+            try {
+                Class<?> doneClass = XposedHelpers.findClass(doneClassName, classLoader);
+                dispatchDoneToken = XposedHelpers.getStaticObjectField(doneClass, "a");
+            } catch (Throwable ignored) {
+                continue;
+            }
+
+            for (String eventClassName : SEARCH_CONTACT_SELECTION_EVENT_CLASS_CANDIDATES) {
+                final Class<?> dispatchEventClass;
+                try {
+                    dispatchEventClass = XposedHelpers.findClass(eventClassName, classLoader);
+                } catch (Throwable ignored) {
+                    continue;
+                }
+
+                for (String className : SEARCH_CONTACT_SELECTION_DISPATCH_HANDLER_CLASS_CANDIDATES) {
+                    try {
+                        XposedHelpers.findAndHookMethod(className, classLoader, "a",
+                                dispatchEventClass, new XC_MethodHook() {
+                                    @Override
+                                    protected void beforeHookedMethod(MethodHookParam param) {
+                                        Object dispatchEvent =
+                                                param.args != null && param.args.length > 0
+                                                        ? param.args[0]
+                                                        : null;
+                                        if (dispatchEvent == null) {
+                                            return;
+                                        }
+                                        String participantLookupKey =
+                                                extractParticipantLookupKeyFromSelectionDispatchEvent(
+                                                        dispatchEvent);
+                                        if (!isParticipantLookupKeyArchivedOnly(
+                                                participantLookupKey,
+                                                param.thisObject.getClass().getClassLoader(),
+                                                null)) {
+                                            return;
+                                        }
+                                        log("blocked archived-only contact selection dispatch; participant_lookup_key="
+                                                + participantLookupKey);
+                                        param.setResult(dispatchDoneToken);
+                                    }
+                                });
+                        log("hook installed: " + className + ".a("
+                                + dispatchEventClass.getSimpleName()
+                                + ") archived contact selection guard");
+                        return;
+                    } catch (Throwable ignored) {
+                        // Try next dispatch-handler candidate.
+                    }
+                }
+            }
         }
+        log("hook unavailable: search contact selection dispatch handler not found");
     }
 
     private static java.util.List<?> filterArchivedSearchFilterDataItems(
@@ -1252,6 +1497,45 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
         } catch (Throwable ignored) {
             // Keep null when schema is unsupported.
+        }
+        return null;
+    }
+
+    private static String extractParticipantLookupKeyFromSelectionDispatchEvent(Object dispatchEvent) {
+        if (dispatchEvent == null) {
+            return null;
+        }
+        try {
+            Object payload = readFieldIfPresent(dispatchEvent, "a");
+            Object keyObj = readFieldIfPresent(payload, "c");
+            if (keyObj instanceof String && !TextUtils.isEmpty((String) keyObj)) {
+                return (String) keyObj;
+            }
+            Object firstEntry = payload != null ? XposedHelpers.callMethod(payload, "c", 0) : null;
+            Object fallbackKey = readFieldIfPresent(firstEntry, "k");
+            if (fallbackKey instanceof String && !TextUtils.isEmpty((String) fallbackKey)) {
+                return (String) fallbackKey;
+            }
+        } catch (Throwable ignored) {
+            // Fall through to reflective field scan.
+        }
+        try {
+            for (Field field : dispatchEvent.getClass().getDeclaredFields()) {
+                if (field.getType() != String.class) {
+                    continue;
+                }
+                field.setAccessible(true);
+                Object value = field.get(dispatchEvent);
+                if (value instanceof String && !TextUtils.isEmpty((String) value)) {
+                    String candidate = (String) value;
+                    if (candidate.indexOf('/') >= 0 || candidate.indexOf(':') >= 0
+                            || candidate.indexOf(';') >= 0 || candidate.length() > 18) {
+                        return candidate;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // Keep null when no stable lookup key is available.
         }
         return null;
     }
@@ -2161,6 +2445,45 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                         + "; migratedChannelId=" + migratedChannelId + "; resolvedChannelId="
                         + (resolved != null ? resolved.getId() : "null")
                         + "; resolvedImportance=" + committedImportance + "; success=" + success);
+            } else if (!enabled && !success && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                    && !TextUtils.isEmpty(parentChannelId)) {
+                String migratedChannelId =
+                        fixedChannelId + "#cmr_off#" + SystemClock.elapsedRealtime();
+                LinkedHashSet<String> staleChannelIds = collectConversationChannelIds(
+                        notificationManager, parentChannelId, conversationKeys);
+                staleChannelIds.add(channelId);
+                staleChannelIds.add(fixedChannelId);
+                for (String staleChannelId : staleChannelIds) {
+                    if (TextUtils.isEmpty(staleChannelId)) {
+                        continue;
+                    }
+                    try {
+                        notificationManager.deleteNotificationChannel(staleChannelId);
+                    } catch (Throwable ignored) {
+                        // Best effort cleanup of stale channels.
+                    }
+                }
+                NotificationChannel migratedChannel = buildConversationChannel(context,
+                        committed != null ? committed : existingChannel, migratedChannelId,
+                        conversationKey, parentChannelId, targetImportance);
+                notificationManager.createNotificationChannel(migratedChannel);
+                NotificationChannel resolved =
+                        notificationManager.getNotificationChannel(parentChannelId, conversationKey);
+                if (resolved == null) {
+                    resolved = notificationManager.getNotificationChannel(migratedChannelId);
+                }
+                if (resolved != null) {
+                    channelId = resolved.getId();
+                    committedImportance = resolved.getImportance();
+                    success = committedImportance == NotificationManager.IMPORTANCE_NONE;
+                } else {
+                    success = false;
+                }
+                log("set conversation channel toggle disable fallback; conversationKey="
+                        + conversationKey + "; removedChannelIds=" + staleChannelIds
+                        + "; migratedChannelId=" + migratedChannelId + "; resolvedChannelId="
+                        + (resolved != null ? resolved.getId() : "null")
+                        + "; resolvedImportance=" + committedImportance + "; success=" + success);
             }
 
             log("set conversation channel toggle applied; enabled=" + enabled
@@ -2325,6 +2648,57 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
         }
         return null;
+    }
+
+    private static LinkedHashSet<String> collectConversationChannelIds(
+            NotificationManager notificationManager, String parentChannelId,
+            Set<String> conversationKeys) {
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        if (notificationManager == null || conversationKeys == null || conversationKeys.isEmpty()) {
+            return ids;
+        }
+        if (!TextUtils.isEmpty(parentChannelId) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            for (String key : conversationKeys) {
+                if (TextUtils.isEmpty(key)) {
+                    continue;
+                }
+                try {
+                    NotificationChannel channel = notificationManager.getNotificationChannel(
+                            parentChannelId, key);
+                    if (channel != null && !TextUtils.isEmpty(channel.getId())) {
+                        ids.add(channel.getId());
+                    }
+                } catch (Throwable ignored) {
+                    // Try other key candidates.
+                }
+            }
+        }
+        try {
+            List<NotificationChannel> channels = notificationManager.getNotificationChannels();
+            if (channels == null) {
+                return ids;
+            }
+            for (NotificationChannel channel : channels) {
+                if (channel == null) {
+                    continue;
+                }
+                String channelId = channel.getId();
+                boolean matches = channelIdMatchesConversationKey(channelId, conversationKeys);
+                if (!matches && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    String conversationId = channel.getConversationId();
+                    matches = !TextUtils.isEmpty(conversationId)
+                            && conversationKeys.contains(conversationId)
+                            && (TextUtils.isEmpty(parentChannelId)
+                            || TextUtils.equals(parentChannelId, channel.getParentChannelId()));
+                }
+                if (matches && !TextUtils.isEmpty(channelId)) {
+                    ids.add(channelId);
+                }
+            }
+        } catch (Throwable ignored) {
+            // Channel enumeration is best effort.
+        }
+        return ids;
     }
 
     private static boolean channelIdMatchesConversationKey(String channelId,
@@ -3477,6 +3851,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
         try {
             Class<?> futureClass = XposedHelpers.findClass("fbje", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("fboy", classLoader);
             return XposedHelpers.callStaticMethod(futureClass, "e", value);
         } catch (Throwable ignored) {
             // No more fallback options.

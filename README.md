@@ -19,7 +19,7 @@ LSPosed/Xposed module for Google Messages (`com.google.android.apps.messaging`) 
 - Conversation-channel migration fallback for notification restoration
 
 ## Simple Usage Instructions
-- Install CMReborn v1.1.0 APK
+- Install CMReborn v1.1.1 APK
 - Enable module in LSPosed/Vector
 - Hook to only Google Messages
 - Open Google Messages > Tap Search > Type helloworld (that's your covert message box)
