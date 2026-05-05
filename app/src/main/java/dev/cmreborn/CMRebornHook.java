@@ -133,10 +133,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     };
     private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES = {"fdju", "fdke"};
     private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES = {"fdlo", "fdsh"};
-    private static final String[] SEARCH_OPS_CLASS_CANDIDATES = {"cleu", "ckzs"};
-    private static final String[] SEARCH_FILTER_CLASS_CANDIDATES = {"clcz", "ckxx"};
+    private static final String[] SEARCH_OPS_CLASS_CANDIDATES = {"clek", "cldj", "cleu", "ckzs"};
+    private static final String[] SEARCH_FILTER_CLASS_CANDIDATES = {"clcp", "clcz", "ckxx"};
     private static final String[] SEARCH_BUILDER_CLASS_CANDIDATES = {"bpeb", "bozc"};
-    private static final String[] QUERY_BUILDER_CLAUSE_CLASS_CANDIDATES = {"eiic", "eico"};
+    private static final String[] QUERY_BUILDER_CLAUSE_CLASS_CANDIDATES = {"eihs", "eiic", "eico"};
     private static final String[] QUERY_BUILDER_CLASS_CANDIDATES = {
             ATTACHMENT_BUILDER_BYPM,
             ATTACHMENT_BUILDER_BUNA,
@@ -145,8 +145,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             ATTACHMENT_BUILDER_BURZ,
             ATTACHMENT_BUILDER_BVOC
     };
-    private static final String[] QUERY_BUILDER_BASE_CLASS_CANDIDATES = {"eiou", "eije"};
-    private static final String[] QUERY_CLAUSE_BASE_CLASS_CANDIDATES = {"eiov", "eijf"};
+    private static final String[] QUERY_BUILDER_BASE_CLASS_CANDIDATES = {"eiok", "eiou", "eije"};
+    private static final String[] QUERY_CLAUSE_BASE_CLASS_CANDIDATES = {"eiol", "eiov", "eijf"};
     private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES = {"cidc", "cidm", "chyn"};
     private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES = {"feol", "feov", "feip"};
     private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES = {"fdju", "fdke", "fddy"};
