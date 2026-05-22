@@ -11,6 +11,10 @@ local.properties
 # Runtime logs and captures
 *.log
 cmreborn_runtime*.log
+window_dump*.xml
+*_probe.txt
+focus_*.txt
 
 # Private reverse-engineering workspace (not for public repo)
 analysis/
+apk_work/
