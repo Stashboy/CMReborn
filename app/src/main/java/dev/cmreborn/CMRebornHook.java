@@ -69,8 +69,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox";
     private static final String ARCHIVED_FOLDER_ENUM_NAME = "ARCHIVED";
     private static final String SEARCH_TRIGGER = "helloworld";
-    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00f3;
-    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b00f9;
+    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00ff;
+    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0105;
     private static final int ARCHIVE_STATUS_UNARCHIVED = 0;
     private static final int ARCHIVE_STATUS_ARCHIVED = 1;
     private static final int ARCHIVE_STATUS_KEEP_ARCHIVED = 2;
@@ -79,41 +79,47 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final int MAX_RESOURCE_ID_CACHE_SIZE = 512;
     private static final int MAX_CHANNEL_IMPORTANCE_CACHE_SIZE = 2048;
     private static final long TRIGGER_THROTTLE_MS = 1500L;
-    // Validated on Google Messages 308183063 (RC02) and 309541063 (RC03).
+    // Validated on Google Messages 308183063 (RC02), 309541063 (RC03), and 310684063 (RC00).
     private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
-            {"akku", "akfq"};
+            {"aksj", "akku", "akfq"};
     private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
-            {"akpe", "akka"};
-    private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES = {"drlp", "dqlb"};
-    private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES = {"drmv", "dqmh"};
-    private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES = {"droo", "dqoa"};
+            {"akwt", "akpe", "akka"};
+    private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
+            {"dsyx", "drlp", "dqlb"};
+    private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
+            {"dtad", "drmv", "dqmh"};
+    private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
+            {"dtbw", "droo", "dqoa"};
     private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
-            {"droh", "dqnt"};
+            {"dtbp", "droh", "dqnt"};
     private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"drsy", "dqsk"};
+            {"dtgh", "drsy", "dqsk"};
     private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"drte", "dqsq"};
+            {"dtgn", "drte", "dqsq"};
     private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
-            {"drmk", "dqlw"};
-    private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"drqd", "dqpp"};
+            {"dszs", "drmk", "dqlw"};
+    private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
+            {"dtdm#m", "drqd#l", "dqpp#l"};
     private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
-            {"drma", "dqlm"};
+            {"dszi", "drma", "dqlm"};
     private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+            "dtey#G", "dthe#G", "dtex#M", "dtej#M",
             "drrp#G", "drtv#G", "drro#M", "drra#M",
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
-    private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES = {"feml", "fdzc"};
-    private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES = {"feof", "feaw"};
-    private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES = {"cjcn", "cikq"};
-    private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES = {"ffrd", "ffdu"};
-    private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES = {"feml", "fdzc"};
-    private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES = {"dgtz", "dfwt"};
+    private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES = {"fgdq", "feml", "fdzc"};
+    private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES = {"fgfk", "feof", "feaw"};
+    private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
+            {"ckdj", "cjcn", "cikq"};
+    private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES = {"fhii", "ffrd", "ffdu"};
+    private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES = {"fgdq", "feml", "fdzc"};
+    private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES = {"dieo", "dgtz", "dfwt"};
     private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
-            {"bnsq", "bmuo"};
-    private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES = {"fabf", "ezny"};
+            {"bosz", "bnsq", "bmuo"};
+    private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
+            {"fbsj", "fabf", "ezny"};
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
-            {"dojd", "dniq"};
+            {"dpvi", "dojd", "dniq"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
             Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
@@ -1156,15 +1162,26 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
     private static void hookSearchContactResultsFilter(ClassLoader classLoader) {
         boolean hookedAny = false;
-        for (String className : SEARCH_CONTACT_RESULTS_ADAPTER_CLASS_CANDIDATES) {
+        for (String candidate : SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES) {
+            if (TextUtils.isEmpty(candidate)) {
+                continue;
+            }
+            int separator = candidate.indexOf('#');
+            if (separator <= 0 || separator >= candidate.length() - 1) {
+                continue;
+            }
+            String className = candidate.substring(0, separator);
+            String methodName = candidate.substring(separator + 1);
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "l", java.util.List.class,
+                XposedHelpers.findAndHookMethod(className, classLoader, methodName,
+                        java.util.List.class,
                         buildSearchContactResultsHook());
-                log("hook installed: " + className + ".l(List) archived-contact-result filter");
+                log("hook installed: " + className + "." + methodName
+                        + "(List) archived-contact-result filter");
                 hookedAny = true;
                 break;
             } catch (Throwable ignored) {
-                // Try next contact results adapter candidate.
+                // Try next contact results adapter/method candidate.
             }
         }
         if (!hookedAny) {
@@ -2623,6 +2640,27 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
             boolean hookedClass = false;
             try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "b", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                                logOnce("archived-unarchive-visible",
+                                        "archived selection unarchive action enforced");
+                            }
+                        } catch (Throwable t) {
+                            logThrowable("archived selection unarchive enforce failed: b()", t);
+                        }
+                    }
+                });
+                log("hook installed: " + className + ".b() enforce unarchive in Archived folder");
+                hookedClass = true;
+                hookedAny = true;
+            } catch (Throwable ignored) {
+                // Method may have changed; continue with other lifecycle hooks.
+            }
+
+            try {
                 XposedHelpers.findAndHookMethod(className, classLoader, "e", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
@@ -2757,19 +2795,17 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return false;
         }
 
-        MenuItem unarchiveItem = null;
-        Object unarchiveObj = readFieldIfPresent(selectionController, "p");
-        if (unarchiveObj instanceof MenuItem) {
-            unarchiveItem = (MenuItem) unarchiveObj;
-        }
-
         Menu menu = null;
         Object menuObj = readFieldIfPresent(selectionController, "n");
+        if (!(menuObj instanceof Menu)) {
+            menuObj = readFieldIfPresent(selectionController, "o");
+        }
         if (menuObj instanceof Menu) {
             menu = (Menu) menuObj;
         }
 
-        if (unarchiveItem == null && menu != null) {
+        MenuItem unarchiveItem = null;
+        if (menu != null) {
             int unarchiveId = resourceIdFromMenuContext(menu, "action_unarchive");
             if (unarchiveId == 0) {
                 unarchiveId = INSPECTED_ACTION_UNARCHIVE_ID;
@@ -2779,6 +2815,15 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 unarchiveItem = fallbackUnarchive;
             }
         }
+        if (unarchiveItem == null) {
+            Object unarchiveObj = readFieldIfPresent(selectionController, "q");
+            if (!(unarchiveObj instanceof MenuItem)) {
+                unarchiveObj = readFieldIfPresent(selectionController, "p");
+            }
+            if (unarchiveObj instanceof MenuItem) {
+                unarchiveItem = (MenuItem) unarchiveObj;
+            }
+        }
 
         if (unarchiveItem != null) {
             unarchiveItem.setVisible(true);
@@ -2786,13 +2831,19 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
 
         MenuItem archiveItem = null;
-        Object archiveObj = readFieldIfPresent(selectionController, "o");
-        if (archiveObj instanceof MenuItem) {
-            archiveItem = (MenuItem) archiveObj;
-        } else if (menu != null) {
+        if (menu != null) {
             int archiveId = resourceIdFromMenuContext(menu, "action_archive");
             if (archiveId != 0) {
                 archiveItem = menu.findItem(archiveId);
+            }
+        }
+        if (archiveItem == null) {
+            Object archiveObj = readFieldIfPresent(selectionController, "p");
+            if (!(archiveObj instanceof MenuItem)) {
+                archiveObj = readFieldIfPresent(selectionController, "o");
+            }
+            if (archiveObj instanceof MenuItem) {
+                archiveItem = (MenuItem) archiveObj;
             }
         }
 
@@ -2805,7 +2856,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static boolean isArchivedFolderSelectionController(Object selectionController) {
-        Object folderEnum = readFieldIfPresent(selectionController, "c");
+        Object folderEnum = readFieldIfPresent(selectionController, "d");
+        if (folderEnum == null) {
+            folderEnum = readFieldIfPresent(selectionController, "c");
+        }
         if (folderEnum == null) {
             return false;
         }
@@ -2851,7 +2905,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
 
         Context context = null;
-        Object contextField = readFieldIfPresent(selectionController, "f");
+        Object contextField = readFieldIfPresent(selectionController, "g");
+        if (contextField instanceof Context) {
+            context = (Context) contextField;
+        }
+        if (context == null) {
+            contextField = readFieldIfPresent(selectionController, "f");
+        }
         if (contextField instanceof Context) {
             context = (Context) contextField;
         }
@@ -3208,6 +3268,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         try {
             Object conversationStoreProvider = XposedHelpers.getObjectField(metadataOps, "h");
             Object conversationStore = XposedHelpers.callMethod(conversationStoreProvider, "a");
+            try {
+                return XposedHelpers.callMethod(conversationStore, "r", conversationId);
+            } catch (Throwable ignored) {
+                // Older supported Messages builds used q(...) for the same archive-status lookup.
+            }
             return XposedHelpers.callMethod(conversationStore, "q", conversationId);
         } catch (Throwable t) {
             logThrowable("archive-preserve current status lookup failed", t);
@@ -3466,7 +3531,19 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             // Continue fallback.
         }
         try {
+            Class<?> futureClass = XposedHelpers.findClass("fkze", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "i", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
             Class<?> futureClass = XposedHelpers.findClass("fcrp", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("feiu", classLoader);
             return XposedHelpers.callStaticMethod(futureClass, "e", value);
         } catch (Throwable ignored) {
             // Continue fallback.
