@@ -80,30 +80,31 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final int MAX_CHANNEL_IMPORTANCE_CACHE_SIZE = 2048;
     private static final long TRIGGER_THROTTLE_MS = 1500L;
     // Validated on Google Messages 308183063 (RC02), 309541063 (RC03), 310684063 (RC00),
-    // 310772063 (RC00), and 311460063 (RC01).
+    // 310772063 (RC00), 311460063 (RC01), and 311755063 (RC00).
     private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
-            {"aldm", "akzi", "aksj", "akku", "akfq"};
+            {"aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
     private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
-            {"alhw", "alds", "akwt", "akpe", "akka"};
+            {"etql", "alhw", "alds", "akwt", "akpe", "akka"};
     private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
-            {"dtuv", "dtje", "dsyx", "drlp", "dqlb"};
+            {"dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
     private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
-            {"dtwb", "dtkk", "dtad", "drmv", "dqmh"};
+            {"ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
     private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
-            {"dtxu", "dtmd", "dtbw", "droo", "dqoa"};
+            {"duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
     private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
-            {"dtxn", "dtlw", "dtbp", "droh", "dqnt"};
+            {"duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
     private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"ducf", "dtqo", "dtgh", "drsy", "dqsk"};
+            {"duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
     private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"ducl", "dtqu", "dtgn", "drte", "dqsq"};
+            {"duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
     private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
-            {"dtvq", "dtjz", "dszs", "drmk", "dqlw"};
+            {"ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
     private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
-            {"dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
+            {"dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
     private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
-            {"dtvg", "dtjp", "dszi", "drma", "dqlm"};
+            {"dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
     private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+            "duhl#G", "dujr#G", "duhk#M", "dugw#M",
             "duaw#G", "dudc#G", "duav#M", "duah#M",
             "dtpf#G", "dtrl#G", "dtpe#M", "dtoq#M",
             "dtey#G", "dthe#G", "dtex#M", "dtej#M",
@@ -111,23 +112,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
     private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
-            {"fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES =
-            {"fggx", "fgrl", "fgfk", "feof", "feaw"};
+            {"fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
     private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
-            {"ckya", "cknk", "ckdj", "cjcn", "cikq"};
+            {"clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
     private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES =
-            {"fhii", "fhuj", "ffrd", "ffdu"};
+            {"fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
     private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
-            {"fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
-            {"djae", "diou", "dieo", "dgtz", "dfwt"};
+            {"djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
     private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
-            {"bplw", "bpcv", "bosz", "bnsq", "bmuo"};
+            {"bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
     private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
-            {"fbtu", "fceb", "fbsj", "fabf", "ezny"};
+            {"fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
-            {"dqra", "dqfp", "dpvi", "dojd", "dniq"};
+            {"dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
             Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
@@ -454,7 +455,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static void hookProfileArchivedMenu(ClassLoader classLoader) {
-        final Class<?> hiddenVisibilityHandlerClass = findClassAny(classLoader,
+        final Class<?> hiddenVisibilityHandlerClass = findInstantiableClassAny(classLoader,
                 PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES);
         if (hiddenVisibilityHandlerClass == null) {
             log("hook unavailable: profile hidden visibility class not found");
@@ -598,9 +599,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                             "search home suggestions hidden");
                                 }
                             }
-                        });
+                });
                 log("hook installed: " + className + ".M(...) search home cleanup");
                 hookedAny = true;
+                break;
             } catch (Throwable ignored) {
                 // Try next search fragment candidate.
             }
@@ -1763,8 +1765,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             final Class<?> conversationIdTypeClass = XposedHelpers.findClass(
                     "com.google.android.apps.messaging.shared.datamodel.data.datatypes.ConversationIdType",
                     classLoader);
-            final Class<?> archiveStatusClass = findClassAny(classLoader,
-                    ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES);
+            final Class<?> archiveStatusClass = findArchiveStatusEnumClass(classLoader);
             final Class<?> eventReasonClass = findClassAny(classLoader,
                     ARCHIVE_REASON_CLASS_CANDIDATES);
             final Class<?> conversationIdListClass = findClassAny(classLoader,
@@ -3533,6 +3534,22 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         return null;
     }
 
+    private static Class<?> findInstantiableClassAny(ClassLoader classLoader, String[] classNames) {
+        if (classLoader == null || classNames == null) {
+            return null;
+        }
+        for (String className : classNames) {
+            try {
+                Class<?> candidate = XposedHelpers.findClass(className, classLoader);
+                XposedHelpers.newInstance(candidate);
+                return candidate;
+            } catch (Throwable ignored) {
+                // Try next class.
+            }
+        }
+        return null;
+    }
+
     private static Object buildImmediateFuture(ClassLoader classLoader, Object value) {
         try {
             Class<?> futuresClass = XposedHelpers.findClass(
@@ -3561,6 +3578,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
         try {
             Class<?> futureClass = XposedHelpers.findClass("fekd", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("fept", classLoader);
             return XposedHelpers.callStaticMethod(futureClass, "e", value);
         } catch (Throwable ignored) {
             // Continue fallback.
