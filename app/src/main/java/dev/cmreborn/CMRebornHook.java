@@ -69,8 +69,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox";
     private static final String ARCHIVED_FOLDER_ENUM_NAME = "ARCHIVED";
     private static final String SEARCH_TRIGGER = "helloworld";
-    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00ff;
-    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0105;
+    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00fe;
+    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0104;
     private static final int ARCHIVE_STATUS_UNARCHIVED = 0;
     private static final int ARCHIVE_STATUS_ARCHIVED = 1;
     private static final int ARCHIVE_STATUS_KEEP_ARCHIVED = 2;
@@ -312,6 +312,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                 }
 
                                 Menu menu = (Menu) param.args[0];
+                                if (enforceArchivedActivityMenuUnarchive(activity, menu)) {
+                                    logOnce("archived-activity-unarchive-visible",
+                                            "archived activity unarchive action enforced");
+                                }
+
                                 int itemId = resourceId(activity, "id", "action_show_archived");
                                 if (itemId == 0) {
                                     return;
@@ -2673,6 +2678,27 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
 
             try {
+                XposedHelpers.findAndHookMethod(className, classLoader, "c", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        try {
+                            if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                                logOnce("archived-unarchive-visible",
+                                        "archived selection unarchive action enforced");
+                            }
+                        } catch (Throwable t) {
+                            logThrowable("archived selection unarchive enforce failed: c()", t);
+                        }
+                    }
+                });
+                log("hook installed: " + className + ".c() enforce unarchive in Archived folder");
+                hookedClass = true;
+                hookedAny = true;
+            } catch (Throwable ignored) {
+                // Method may have changed; continue with other lifecycle hooks.
+            }
+
+            try {
                 XposedHelpers.findAndHookMethod(className, classLoader, "e", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
@@ -2840,6 +2866,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (unarchiveItem != null) {
             unarchiveItem.setVisible(true);
             unarchiveItem.setEnabled(true);
+            unarchiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
 
         MenuItem archiveItem = null;
@@ -2862,9 +2889,36 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (archiveItem != null) {
             archiveItem.setVisible(false);
             archiveItem.setEnabled(false);
+            archiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         }
 
         return unarchiveItem != null;
+    }
+
+    private static boolean enforceArchivedActivityMenuUnarchive(Activity activity, Menu menu) {
+        if (activity == null || menu == null || !isArchivedActivityContext(activity)) {
+            return false;
+        }
+        int unarchiveId = resourceId(activity, "id", "action_unarchive");
+        if (unarchiveId == 0) {
+            unarchiveId = INSPECTED_ACTION_UNARCHIVE_ID;
+        }
+        MenuItem unarchiveItem = menu.findItem(unarchiveId);
+        if (unarchiveItem == null) {
+            return false;
+        }
+        unarchiveItem.setVisible(true);
+        unarchiveItem.setEnabled(true);
+        unarchiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+        int archiveId = resourceId(activity, "id", "action_archive");
+        MenuItem archiveItem = archiveId != 0 ? menu.findItem(archiveId) : null;
+        if (archiveItem != null) {
+            archiveItem.setVisible(false);
+            archiveItem.setEnabled(false);
+            archiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        }
+        return true;
     }
 
     private static boolean isArchivedFolderSelectionController(Object selectionController) {
@@ -2873,14 +2927,42 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             folderEnum = readFieldIfPresent(selectionController, "c");
         }
         if (folderEnum == null) {
-            return false;
+            return isArchivedActivityContext(readFieldIfPresent(selectionController, "f"))
+                    || isArchivedActivityContext(readFieldIfPresent(selectionController, "g"));
         }
         try {
             Object name = XposedHelpers.callMethod(folderEnum, "name");
-            return ARCHIVED_FOLDER_ENUM_NAME.equals(String.valueOf(name));
+            if (ARCHIVED_FOLDER_ENUM_NAME.equals(String.valueOf(name))) {
+                return true;
+            }
         } catch (Throwable ignored) {
-            return ARCHIVED_FOLDER_ENUM_NAME.equals(String.valueOf(folderEnum));
+            if (ARCHIVED_FOLDER_ENUM_NAME.equals(String.valueOf(folderEnum))) {
+                return true;
+            }
         }
+        return isArchivedActivityContext(readFieldIfPresent(selectionController, "f"))
+                || isArchivedActivityContext(readFieldIfPresent(selectionController, "g"));
+    }
+
+    private static boolean isArchivedActivityContext(Object value) {
+        if (!(value instanceof Context)) {
+            return false;
+        }
+        Context context = (Context) value;
+        for (int depth = 0; context != null && depth < 8; depth++) {
+            if (ARCHIVED_ACTIVITY.equals(context.getClass().getName())) {
+                return true;
+            }
+            if (!(context instanceof ContextWrapper)) {
+                return false;
+            }
+            Context baseContext = ((ContextWrapper) context).getBaseContext();
+            if (baseContext == context) {
+                return false;
+            }
+            context = baseContext;
+        }
+        return false;
     }
 
     private static int selectedConversationCount(Object selectionController) {
