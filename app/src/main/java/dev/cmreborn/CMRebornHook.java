@@ -69,8 +69,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox";
     private static final String ARCHIVED_FOLDER_ENUM_NAME = "ARCHIVED";
     private static final String SEARCH_TRIGGER = "helloworld";
-    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00fe;
-    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0104;
+    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b0102;
+    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0108;
     private static final int ARCHIVE_STATUS_UNARCHIVED = 0;
     private static final int ARCHIVE_STATUS_ARCHIVED = 1;
     private static final int ARCHIVE_STATUS_KEEP_ARCHIVED = 2;
@@ -80,30 +80,36 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final int MAX_CHANNEL_IMPORTANCE_CACHE_SIZE = 2048;
     private static final long TRIGGER_THROTTLE_MS = 1500L;
     // Validated on Google Messages 308183063 (RC02), 309541063 (RC03), 310684063 (RC00),
-    // 310772063 (RC00), 311460063 (RC01), and 311755063 (RC00).
+    // 310772063 (RC00), 311460063 (RC01), 311755063 (RC00), 312389063 (RC01),
+    // 312983063 (RC00), and 314045063 (RC00).
     private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
-            {"aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
+            {"alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
     private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
-            {"etql", "alhw", "alds", "akwt", "akpe", "akka"};
+            {"evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
     private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
-            {"dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
+            {"dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
     private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
-            {"ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
+            {"dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
+    private static final String[] MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES =
+            {"cpfh"};
     private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
-            {"duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
+            {"dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
     private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
-            {"duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
+            {"dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
     private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
+            {"dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
     private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
+            {"dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
     private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
-            {"ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
+            {"dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
     private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
-            {"dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
+            {"dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
     private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
-            {"dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
+            {"dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
     private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+            "dvuv#G", "dvxb#G", "dvug#M", "dvuu#M",
+            "dvxe#G", "dvzk#G", "dvwp#M", "dvxd#M",
+            "dvbb#G", "dvdh#G", "dvam#M", "dvba#M",
             "duhl#G", "dujr#G", "duhk#M", "dugw#M",
             "duaw#G", "dudc#G", "duav#M", "duah#M",
             "dtpf#G", "dtrl#G", "dtpe#M", "dtoq#M",
@@ -112,23 +118,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
     private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
-            {"fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES =
-            {"fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
+            {"fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
     private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
-            {"clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
+            {"clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
     private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES =
-            {"fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
+            {"flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
     private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
-            {"fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
-            {"djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
+            {"dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
     private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
-            {"bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
+            {"bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
     private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
-            {"fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
+            {"ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
-            {"dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
+            {"dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
             Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
@@ -262,7 +268,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             hookSearchTrigger(classLoader);
             hookSearchHomeCleanup(classLoader);
             hookSearchCategorySuggestions(classLoader);
-            log("hook disabled: query-stage archived search filter");
+            hookMessageSearchRawResults(classLoader);
             hookSearchResultAdapters(classLoader);
             hookSearchSuggestionContactFilter(classLoader);
             hookSearchContactResultsFilter(classLoader);
@@ -580,36 +586,42 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static void hookSearchHomeCleanup(ClassLoader classLoader) {
         boolean hookedAny = false;
         for (String className : SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES) {
-            try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "M",
-                        LayoutInflater.class, ViewGroup.class, Bundle.class,
-                        new XC_MethodHook() {
-                            @Override
-                            protected void afterHookedMethod(MethodHookParam param) {
-                                Object result = param.getResult();
-                                if (!(result instanceof View)) {
-                                    return;
-                                }
+            for (String methodName : new String[]{"M", "N"}) {
+                try {
+                    XposedHelpers.findAndHookMethod(className, classLoader, methodName,
+                            LayoutInflater.class, ViewGroup.class, Bundle.class,
+                            new XC_MethodHook() {
+                                @Override
+                                protected void afterHookedMethod(MethodHookParam param) {
+                                    Object result = param.getResult();
+                                    if (!(result instanceof View)) {
+                                        return;
+                                    }
 
-                                View root = (View) result;
-                                boolean changed = false;
-                                changed |= hideChildByName(root, "zero_state_search_home_group");
-                                changed |= hideChildByName(root, "zero_state_content_groups");
-                                changed |= hideChildByName(root,
-                                        "zero_state_content_groups_holder");
-                                changed |= hideChildByName(root,
-                                        "zero_state_content_grid_layout");
-                                if (changed) {
-                                    logOnce("search-home-suggestions-hidden",
-                                            "search home suggestions hidden");
+                                    View root = (View) result;
+                                    boolean changed = false;
+                                    changed |= hideChildByName(root, "zero_state_search_home_group");
+                                    changed |= hideChildByName(root, "zero_state_content_groups");
+                                    changed |= hideChildByName(root,
+                                            "zero_state_content_groups_holder");
+                                    changed |= hideChildByName(root,
+                                            "zero_state_content_grid_layout");
+                                    if (changed) {
+                                        logOnce("search-home-suggestions-hidden",
+                                                "search home suggestions hidden");
+                                    }
                                 }
-                            }
-                });
-                log("hook installed: " + className + ".M(...) search home cleanup");
-                hookedAny = true;
+                    });
+                    log("hook installed: " + className + "." + methodName
+                            + "(...) search home cleanup");
+                    hookedAny = true;
+                    break;
+                } catch (Throwable ignored) {
+                    // Try next method/class candidate.
+                }
+            }
+            if (hookedAny) {
                 break;
-            } catch (Throwable ignored) {
-                // Try next search fragment candidate.
             }
         }
         if (!hookedAny) {
@@ -627,17 +639,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         boolean hookedAny = false;
         for (String className : SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES) {
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "b",
-                        new XC_MethodHook() {
-                            @Override
-                            protected void beforeHookedMethod(MethodHookParam param) {
-                                param.setResult(emptyResultFuture);
-                                logOnce("search-category-suggestions-suppressed",
-                                        "search category suggestions suppressed");
-                            }
-                        });
+                Class<?> candidateClass = XposedHelpers.findClass(className, classLoader);
+                Method method = findNoArgMethodReturning(candidateClass, "b",
+                        "com.google.common.util.concurrent.ListenableFuture", classLoader);
+                if (method == null) {
+                    continue;
+                }
+                XposedBridge.hookMethod(method, new XC_MethodHook() {
+                    @Override
+                    protected void beforeHookedMethod(MethodHookParam param) {
+                        param.setResult(emptyResultFuture);
+                        logOnce("search-category-suggestions-suppressed",
+                                "search category suggestions suppressed");
+                    }
+                });
                 log("hook installed: " + className + ".b() empty category list");
                 hookedAny = true;
+                break;
             } catch (Throwable ignored) {
                 // Try next category provider candidate.
             }
@@ -645,6 +663,178 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (!hookedAny) {
             log("hook unavailable: category suggestions provider class not found");
         }
+    }
+
+    private static void hookMessageSearchRawResults(ClassLoader classLoader) {
+        boolean hookedAny = false;
+        for (String className : MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES) {
+            try {
+                Class<?> collectorClass = XposedHelpers.findClass(className, classLoader);
+                int hookedMethods = 0;
+                for (Method method : collectorClass.getDeclaredMethods()) {
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    boolean successCallback = "c".equals(method.getName())
+                            && parameterTypes.length == 1;
+                    boolean failureCallback = "b".equals(method.getName())
+                            && parameterTypes.length == 2
+                            && parameterTypes[0] == String.class;
+                    if (!successCallback && !failureCallback) {
+                        continue;
+                    }
+                    method.setAccessible(true);
+                    XposedBridge.hookMethod(method, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) {
+                            filterMessageSearchCollector(param.thisObject,
+                                    param.method.getName());
+                        }
+                    });
+                    hookedMethods++;
+                }
+                if (hookedMethods > 0) {
+                    log("hook installed: " + className
+                            + ".b/c(...) query-stage archived search filter");
+                    hookedAny = true;
+                    break;
+                }
+            } catch (Throwable ignored) {
+                // Try next raw search result collector candidate.
+            }
+        }
+        if (!hookedAny) {
+            log("hook unavailable: query-stage archived search filter");
+        }
+    }
+
+    private static void filterMessageSearchCollector(Object collector, String callbackName) {
+        if (collector == null) {
+            return;
+        }
+        try {
+            int removedMessages = filterArchivedMessageIdSetField(collector, "b");
+            int removedConversations = filterArchivedConversationMapField(collector, "c");
+            if (removedMessages > 0 || removedConversations > 0) {
+                log("query-stage archived search filter applied; callback=" + callbackName
+                        + "; removedMessages=" + removedMessages
+                        + "; removedConversations=" + removedConversations);
+            } else if (ENABLE_DEBUG_LOGS) {
+                log("query-stage archived search filter checked; callback=" + callbackName);
+            }
+        } catch (Throwable t) {
+            logThrowable("query-stage archived search filter failed", t);
+        }
+    }
+
+    private static int filterArchivedMessageIdSetField(Object target, String fieldName) {
+        Object raw = readFieldIfPresent(target, fieldName);
+        if (!(raw instanceof java.util.Collection)) {
+            return 0;
+        }
+        java.util.Collection<?> original = (java.util.Collection<?>) raw;
+        if (original.isEmpty()) {
+            return 0;
+        }
+        java.util.LinkedHashSet<Object> kept = new java.util.LinkedHashSet<>(original.size());
+        int removed = 0;
+        java.util.HashMap<Long, Integer> statusCache = new java.util.HashMap<>();
+        for (Object messageId : original) {
+            int status = archiveStatusForMessageId(messageId, statusCache);
+            if (status == ARCHIVE_STATUS_ARCHIVED || status == ARCHIVE_STATUS_KEEP_ARCHIVED) {
+                removed++;
+                continue;
+            }
+            kept.add(messageId);
+        }
+        if (removed <= 0) {
+            return 0;
+        }
+        replaceCollectionContents(target, fieldName, raw, kept);
+        return removed;
+    }
+
+    private static int filterArchivedConversationMapField(Object target, String fieldName) {
+        Object raw = readFieldIfPresent(target, fieldName);
+        if (!(raw instanceof java.util.Map)) {
+            return 0;
+        }
+        java.util.Map<?, ?> original = (java.util.Map<?, ?>) raw;
+        if (original.isEmpty()) {
+            return 0;
+        }
+        java.util.LinkedHashMap<Object, Object> kept = new java.util.LinkedHashMap<>();
+        int removed = 0;
+        for (java.util.Map.Entry<?, ?> entry : original.entrySet()) {
+            int status = conversationArchiveStatusFromGlobalLookup(entry.getKey());
+            if (status == ARCHIVE_STATUS_ARCHIVED || status == ARCHIVE_STATUS_KEEP_ARCHIVED) {
+                removed++;
+                continue;
+            }
+            kept.put(entry.getKey(), entry.getValue());
+        }
+        if (removed <= 0) {
+            return 0;
+        }
+        replaceMapContents(target, fieldName, raw, kept);
+        return removed;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void replaceCollectionContents(Object target, String fieldName, Object raw,
+            java.util.Collection<Object> kept) {
+        if (raw instanceof java.util.Collection) {
+            try {
+                java.util.Collection collection = (java.util.Collection) raw;
+                collection.clear();
+                collection.addAll(kept);
+                return;
+            } catch (Throwable ignored) {
+                // Fall back to field replacement for collection implementations that cannot clear.
+            }
+        }
+        try {
+            XposedHelpers.setObjectField(target, fieldName, kept);
+        } catch (Throwable ignored) {
+            // If replacement fails, keep the original result rather than risking search failure.
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void replaceMapContents(Object target, String fieldName, Object raw,
+            java.util.Map<Object, Object> kept) {
+        if (raw instanceof java.util.Map) {
+            try {
+                java.util.Map map = (java.util.Map) raw;
+                map.clear();
+                map.putAll(kept);
+                return;
+            } catch (Throwable ignored) {
+                // Fall back to field replacement for map implementations that cannot clear.
+            }
+        }
+        try {
+            XposedHelpers.setObjectField(target, fieldName, kept);
+        } catch (Throwable ignored) {
+            // If replacement fails, keep the original result rather than risking search failure.
+        }
+    }
+
+    private static int archiveStatusForMessageId(Object messageId,
+            java.util.Map<Long, Integer> statusCache) {
+        long messageIdLong = messageIdLong(messageId);
+        if (messageIdLong <= 0L) {
+            return ARCHIVE_STATUS_UNKNOWN;
+        }
+        if (statusCache != null) {
+            Integer cached = statusCache.get(Long.valueOf(messageIdLong));
+            if (cached != null) {
+                return cached.intValue();
+            }
+        }
+        int status = conversationArchiveStatusFromMessageId(messageIdLong);
+        if (statusCache != null) {
+            statusCache.put(Long.valueOf(messageIdLong), Integer.valueOf(status));
+        }
+        return status;
     }
 
     private static Object filterArchivedConversationViewData(Object viewData, ClassLoader classLoader) {
@@ -785,7 +975,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             if (conversationData == null) {
                 return ARCHIVE_STATUS_UNKNOWN;
             }
-            Object archiveStatus = XposedHelpers.callMethod(conversationData, "B");
+            Object archiveStatus = XposedHelpers.callMethod(conversationData, "C");
+            if (archiveStatus == null || !looksLikeArchiveStatusEnum(archiveStatus)) {
+                archiveStatus = XposedHelpers.callMethod(conversationData, "B");
+            }
             if (archiveStatus == null) {
                 return ARCHIVE_STATUS_UNKNOWN;
             }
@@ -803,6 +996,17 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             Object conversationId = XposedHelpers.callMethod(item, "y");
             if (looksLikeConversationIdType(conversationId)) {
                 return conversationId;
+            }
+        } catch (Throwable ignored) {
+            // Try other known item shapes.
+        }
+        try {
+            Object rowModel = XposedHelpers.callMethod(item, "l");
+            if (rowModel != null) {
+                Object conversationId = XposedHelpers.callMethod(rowModel, "z");
+                if (looksLikeConversationIdType(conversationId)) {
+                    return conversationId;
+                }
             }
         } catch (Throwable ignored) {
             // Try other known item shapes.
@@ -2608,6 +2812,73 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
     }
 
+    private static int conversationArchiveStatusFromMessageId(long messageId) {
+        if (messageId <= 0L) {
+            return ARCHIVE_STATUS_UNKNOWN;
+        }
+        Cursor cursor = null;
+        SQLiteDatabase database = null;
+        try {
+            database = openMessagesDatabase(false);
+            if (database == null) {
+                return ARCHIVE_STATUS_UNKNOWN;
+            }
+            cursor = database.rawQuery(
+                    "SELECT conversations.archive_status "
+                            + "FROM messages "
+                            + "JOIN conversations ON conversations._id = messages.conversation_id "
+                            + "WHERE messages._id = ? LIMIT 1",
+                    new String[]{String.valueOf(messageId)});
+            if (cursor == null || !cursor.moveToFirst()) {
+                return ARCHIVE_STATUS_UNKNOWN;
+            }
+            return cursor.getInt(0);
+        } catch (Throwable t) {
+            logOnce("message-search-archive-status-lookup-unavailable",
+                    "message search archive status lookup unavailable");
+            return ARCHIVE_STATUS_UNKNOWN;
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (Throwable ignored) {
+                    // Ignore cursor close failures during hook execution.
+                }
+            }
+            closeQuietly(database);
+        }
+    }
+
+    private static long messageIdLong(Object messageId) {
+        if (messageId == null) {
+            return -1L;
+        }
+        if (messageId instanceof Number) {
+            return ((Number) messageId).longValue();
+        }
+        try {
+            return XposedHelpers.getLongField(messageId, "a");
+        } catch (Throwable ignored) {
+            // Fall through to method/string parsing fallback.
+        }
+        try {
+            Object idValue = XposedHelpers.callMethod(messageId, "a");
+            if (idValue instanceof Number) {
+                return ((Number) idValue).longValue();
+            }
+            if (idValue instanceof String) {
+                return Long.parseLong((String) idValue);
+            }
+        } catch (Throwable ignored) {
+            // Fall through to toString fallback.
+        }
+        try {
+            return Long.parseLong(String.valueOf(messageId));
+        } catch (Throwable ignored) {
+            return -1L;
+        }
+    }
+
     private static long conversationIdLong(Object conversationId) {
         if (conversationId == null) {
             return -1L;
@@ -3482,6 +3753,29 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         return null;
     }
 
+    private static Method findNoArgMethodReturning(Class<?> targetClass, String methodName,
+            String returnClassName, ClassLoader classLoader) {
+        if (targetClass == null || TextUtils.isEmpty(methodName)
+                || TextUtils.isEmpty(returnClassName) || classLoader == null) {
+            return null;
+        }
+        final Class<?> expectedReturnClass;
+        try {
+            expectedReturnClass = XposedHelpers.findClass(returnClassName, classLoader);
+        } catch (Throwable ignored) {
+            return null;
+        }
+        for (Method method : targetClass.getDeclaredMethods()) {
+            if (!methodName.equals(method.getName()) || method.getParameterTypes().length != 0) {
+                continue;
+            }
+            if (expectedReturnClass.isAssignableFrom(method.getReturnType())) {
+                return method;
+            }
+        }
+        return null;
+    }
+
     private static Activity findActivity(Context context) {
         Context current = context;
         int depth = 0;
@@ -3639,6 +3933,24 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return XposedHelpers.callStaticMethod(futuresClass, "immediateFuture", value);
         } catch (Throwable ignored) {
             // Fall back to known internal helper classes.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("finm", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("fiop", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("ffmn", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
         }
         try {
             Class<?> futureClass = XposedHelpers.findClass("fitm", classLoader);

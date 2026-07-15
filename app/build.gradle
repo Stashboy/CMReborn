@@ -10,8 +10,8 @@ android {
         applicationId 'dev.cmreborn'
         minSdk 26
         targetSdk 36
-        versionCode 13
-        versionName '1.1.11'
+        versionCode 18
+        versionName '1.1.16'
     }
 
     buildTypes {
