@@ -70,6 +70,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final String ARCHIVED_FOLDER_ENUM_NAME = "ARCHIVED";
     private static final String SEARCH_TRIGGER = "helloworld";
     private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b0102;
+    private static final int INSPECTED_ACTION_ARCHIVE_ID = 0x7f0b00d2;
     private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0108;
     private static final int ARCHIVE_STATUS_UNARCHIVED = 0;
     private static final int ARCHIVE_STATUS_ARCHIVED = 1;
@@ -2944,7 +2945,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
-                            if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                            if (enforceArchivedSelectionUnarchive(param.thisObject,
+                                    null, "b")) {
                                 logOnce("archived-unarchive-visible",
                                         "archived selection unarchive action enforced");
                             }
@@ -2965,7 +2967,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
-                            if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                            if (enforceArchivedSelectionUnarchive(param.thisObject,
+                                    null, "c")) {
                                 logOnce("archived-unarchive-visible",
                                         "archived selection unarchive action enforced");
                             }
@@ -2986,7 +2989,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
-                            if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                            if (enforceArchivedSelectionUnarchive(param.thisObject,
+                                    null, "e")) {
                                 logOnce("archived-unarchive-visible",
                                         "archived selection unarchive action enforced");
                             }
@@ -3008,7 +3012,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
                                 try {
-                                    if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                                    Menu menu = param.args != null && param.args.length > 1
+                                            ? (Menu) param.args[1] : null;
+                                    if (enforceArchivedSelectionUnarchive(param.thisObject,
+                                            menu, "onCreateActionMode")) {
                                         logOnce("archived-unarchive-visible",
                                                 "archived selection unarchive action enforced");
                                     }
@@ -3031,7 +3038,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
                                 try {
-                                    if (enforceArchivedSelectionUnarchive(param.thisObject)) {
+                                    Menu menu = param.args != null && param.args.length > 1
+                                            ? (Menu) param.args[1] : null;
+                                    if (enforceArchivedSelectionUnarchive(param.thisObject,
+                                            menu, "onPrepareActionMode")) {
                                         logOnce("archived-unarchive-visible",
                                                 "archived selection unarchive action enforced");
                                     }
@@ -3107,44 +3117,34 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static boolean enforceArchivedSelectionUnarchive(Object selectionController) {
-        if (selectionController == null || !isArchivedFolderSelectionController(selectionController)) {
+        return enforceArchivedSelectionUnarchive(selectionController, null, "unknown");
+    }
+
+    private static boolean enforceArchivedSelectionUnarchive(Object selectionController,
+            Menu menu, String source) {
+        if (selectionController == null) {
+            return false;
+        }
+        if (!isArchivedFolderSelectionController(selectionController)) {
+            logOnce("archived-unarchive-not-archived:" + selectionController.getClass().getName(),
+                    "archived selection unarchive skipped; controller is not Archived folder; class="
+                            + selectionController.getClass().getName());
             return false;
         }
 
         int selectedCount = selectedConversationCount(selectionController);
         if (selectedCount <= 0) {
+            if (ENABLE_DEBUG_LOGS) {
+                log("archived selection unarchive skipped; no selected conversations; source="
+                        + source + "; class=" + selectionController.getClass().getName());
+            }
             return false;
         }
 
-        Menu menu = null;
-        Object menuObj = readFieldIfPresent(selectionController, "n");
-        if (!(menuObj instanceof Menu)) {
-            menuObj = readFieldIfPresent(selectionController, "o");
-        }
-        if (menuObj instanceof Menu) {
-            menu = (Menu) menuObj;
-        }
-
-        MenuItem unarchiveItem = null;
-        if (menu != null) {
-            int unarchiveId = resourceIdFromMenuContext(menu, "action_unarchive");
-            if (unarchiveId == 0) {
-                unarchiveId = INSPECTED_ACTION_UNARCHIVE_ID;
-            }
-            MenuItem fallbackUnarchive = menu.findItem(unarchiveId);
-            if (fallbackUnarchive != null) {
-                unarchiveItem = fallbackUnarchive;
-            }
-        }
-        if (unarchiveItem == null) {
-            Object unarchiveObj = readFieldIfPresent(selectionController, "q");
-            if (!(unarchiveObj instanceof MenuItem)) {
-                unarchiveObj = readFieldIfPresent(selectionController, "p");
-            }
-            if (unarchiveObj instanceof MenuItem) {
-                unarchiveItem = (MenuItem) unarchiveObj;
-            }
-        }
+        Menu resolvedMenu = menu != null ? menu : findMenuField(selectionController);
+        MenuItem unarchiveItem = findSelectionMenuItem(selectionController, resolvedMenu,
+                "action_unarchive", INSPECTED_ACTION_UNARCHIVE_ID,
+                new String[]{"n", "q"});
 
         if (unarchiveItem != null) {
             unarchiveItem.setVisible(true);
@@ -3152,22 +3152,9 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             unarchiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         }
 
-        MenuItem archiveItem = null;
-        if (menu != null) {
-            int archiveId = resourceIdFromMenuContext(menu, "action_archive");
-            if (archiveId != 0) {
-                archiveItem = menu.findItem(archiveId);
-            }
-        }
-        if (archiveItem == null) {
-            Object archiveObj = readFieldIfPresent(selectionController, "p");
-            if (!(archiveObj instanceof MenuItem)) {
-                archiveObj = readFieldIfPresent(selectionController, "o");
-            }
-            if (archiveObj instanceof MenuItem) {
-                archiveItem = (MenuItem) archiveObj;
-            }
-        }
+        MenuItem archiveItem = findSelectionMenuItem(selectionController, resolvedMenu,
+                "action_archive", INSPECTED_ACTION_ARCHIVE_ID,
+                new String[]{"m", "p"});
 
         if (archiveItem != null) {
             archiveItem.setVisible(false);
@@ -3175,7 +3162,122 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             archiveItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         }
 
+        if (unarchiveItem == null) {
+            logOnce("archived-unarchive-item-missing:" + selectionController.getClass().getName(),
+                    "archived selection unarchive item missing; source=" + source
+                            + "; class=" + selectionController.getClass().getName()
+                            + "; selected=" + selectedCount
+                            + "; menuProvided=" + (menu != null)
+                            + "; menuField=" + (resolvedMenu != null));
+            return false;
+        }
+        if (ENABLE_DEBUG_LOGS) {
+            log("archived selection unarchive enforced; source=" + source
+                    + "; class=" + selectionController.getClass().getName()
+                    + "; selected=" + selectedCount
+                    + "; archiveFound=" + (archiveItem != null)
+                    + "; unarchiveId=0x"
+                    + Integer.toHexString(unarchiveItem.getItemId()));
+        }
         return unarchiveItem != null;
+    }
+
+    private static Menu findMenuField(Object selectionController) {
+        if (selectionController == null) {
+            return null;
+        }
+        for (Class<?> current = selectionController.getClass(); current != null;
+                current = current.getSuperclass()) {
+            for (Field field : current.getDeclaredFields()) {
+                try {
+                    if (!Menu.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(selectionController);
+                    if (value instanceof Menu) {
+                        return (Menu) value;
+                    }
+                } catch (Throwable ignored) {
+                    // Try next field.
+                }
+            }
+        }
+        return null;
+    }
+
+    private static MenuItem findSelectionMenuItem(Object selectionController, Menu menu,
+            String idName, int inspectedId, String[] preferredFields) {
+        int actionId = resolveActionId(selectionController, menu, idName, inspectedId);
+        if (menu != null) {
+            MenuItem item = menu.findItem(actionId);
+            if (item != null) {
+                return item;
+            }
+            if (actionId != inspectedId) {
+                item = menu.findItem(inspectedId);
+                if (item != null) {
+                    return item;
+                }
+            }
+        }
+
+        if (preferredFields != null) {
+            for (String fieldName : preferredFields) {
+                Object value = readFieldIfPresent(selectionController, fieldName);
+                if (value instanceof MenuItem
+                        && menuItemMatchesActionId((MenuItem) value, actionId, inspectedId)) {
+                    return (MenuItem) value;
+                }
+            }
+        }
+
+        for (Class<?> current = selectionController != null ? selectionController.getClass() : null;
+                current != null; current = current.getSuperclass()) {
+            for (Field field : current.getDeclaredFields()) {
+                try {
+                    if (!MenuItem.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(selectionController);
+                    if (value instanceof MenuItem
+                            && menuItemMatchesActionId((MenuItem) value, actionId, inspectedId)) {
+                        return (MenuItem) value;
+                    }
+                } catch (Throwable ignored) {
+                    // Try next MenuItem field.
+                }
+            }
+        }
+        return null;
+    }
+
+    private static int resolveActionId(Object selectionController, Menu menu, String idName,
+            int inspectedId) {
+        Context context = contextFromSelectionController(selectionController);
+        if (context != null) {
+            int resolved = resourceId(context, "id", idName);
+            if (resolved != 0) {
+                return resolved;
+            }
+        }
+        if (menu != null) {
+            int resolved = resourceIdFromMenuContext(menu, idName);
+            if (resolved != 0) {
+                return resolved;
+            }
+        }
+        return inspectedId;
+    }
+
+    private static boolean menuItemMatchesActionId(MenuItem item, int resolvedId,
+            int inspectedId) {
+        if (item == null) {
+            return false;
+        }
+        int itemId = item.getItemId();
+        return itemId == resolvedId || itemId == inspectedId;
     }
 
     private static boolean enforceArchivedActivityMenuUnarchive(Activity activity, Menu menu) {
@@ -3205,13 +3307,16 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     }
 
     private static boolean isArchivedFolderSelectionController(Object selectionController) {
-        Object folderEnum = readFieldIfPresent(selectionController, "d");
-        if (folderEnum == null) {
-            folderEnum = readFieldIfPresent(selectionController, "c");
+        if (isArchivedFolderEnum(readFieldIfPresent(selectionController, "d"))
+                || isArchivedFolderEnum(readFieldIfPresent(selectionController, "c"))) {
+            return true;
         }
+        return isArchivedActivityContext(contextFromSelectionController(selectionController));
+    }
+
+    private static boolean isArchivedFolderEnum(Object folderEnum) {
         if (folderEnum == null) {
-            return isArchivedActivityContext(readFieldIfPresent(selectionController, "f"))
-                    || isArchivedActivityContext(readFieldIfPresent(selectionController, "g"));
+            return false;
         }
         try {
             Object name = XposedHelpers.callMethod(folderEnum, "name");
@@ -3223,8 +3328,37 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 return true;
             }
         }
-        return isArchivedActivityContext(readFieldIfPresent(selectionController, "f"))
-                || isArchivedActivityContext(readFieldIfPresent(selectionController, "g"));
+        return false;
+    }
+
+    private static Context contextFromSelectionController(Object selectionController) {
+        if (selectionController == null) {
+            return null;
+        }
+        for (String fieldName : new String[]{"e", "f", "g"}) {
+            Object value = readFieldIfPresent(selectionController, fieldName);
+            if (value instanceof Context) {
+                return (Context) value;
+            }
+        }
+        for (Class<?> current = selectionController.getClass(); current != null;
+                current = current.getSuperclass()) {
+            for (Field field : current.getDeclaredFields()) {
+                try {
+                    if (!Context.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(selectionController);
+                    if (value instanceof Context) {
+                        return (Context) value;
+                    }
+                } catch (Throwable ignored) {
+                    // Try next field.
+                }
+            }
+        }
+        return null;
     }
 
     private static boolean isArchivedActivityContext(Object value) {
@@ -3281,17 +3415,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return true;
         }
 
-        Context context = null;
-        Object contextField = readFieldIfPresent(selectionController, "g");
-        if (contextField instanceof Context) {
-            context = (Context) contextField;
-        }
-        if (context == null) {
-            contextField = readFieldIfPresent(selectionController, "f");
-        }
-        if (contextField instanceof Context) {
-            context = (Context) contextField;
-        }
+        Context context = contextFromSelectionController(selectionController);
         if (context == null) {
             View actionView = menuItem.getActionView();
             if (actionView != null) {
