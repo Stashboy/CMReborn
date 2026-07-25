@@ -3,6 +3,7 @@ package dev.cmreborn;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ContentValues;
@@ -2303,9 +2304,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 if (previousImportance == null && !TextUtils.equals(fixedChannelId, channelId)) {
                     previousImportance = CHANNEL_IMPORTANCE_CACHE.remove(channelId);
                 }
-                targetImportance = previousImportance != null
+                int restoredImportance = previousImportance != null
                         ? sanitizeChannelImportance(previousImportance.intValue())
-                        : NotificationManager.IMPORTANCE_DEFAULT;
+                        : NotificationManager.IMPORTANCE_HIGH;
+                targetImportance = Math.max(restoredImportance,
+                        NotificationManager.IMPORTANCE_HIGH);
             } else {
                 if (existingChannel != null) {
                     int existingImportance = existingChannel.getImportance();
@@ -2329,8 +2332,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             int committedImportance = committed != null
                     ? committed.getImportance()
                     : NotificationManager.IMPORTANCE_UNSPECIFIED;
+            int committedLockscreenVisibility = committed != null
+                    ? committed.getLockscreenVisibility()
+                    : Integer.MIN_VALUE;
             boolean success = enabled
-                    ? committedImportance > NotificationManager.IMPORTANCE_NONE
+                    ? isConversationNotificationChannelFullyEnabled(committed)
                     : committedImportance == NotificationManager.IMPORTANCE_NONE;
 
             if (enabled && !success && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
@@ -2363,7 +2369,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 if (resolved != null) {
                     channelId = resolved.getId();
                     committedImportance = resolved.getImportance();
-                    success = committedImportance > NotificationManager.IMPORTANCE_NONE;
+                    committedLockscreenVisibility = resolved.getLockscreenVisibility();
+                    success = isConversationNotificationChannelFullyEnabled(resolved);
                     if (success) {
                         CHANNEL_IMPORTANCE_CACHE.remove(fixedChannelId);
                         CHANNEL_IMPORTANCE_CACHE.remove(channelId);
@@ -2375,7 +2382,9 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                         + conversationKey + "; removedChannelIds=" + staleChannelIds
                         + "; migratedChannelId=" + migratedChannelId + "; resolvedChannelId="
                         + (resolved != null ? resolved.getId() : "null")
-                        + "; resolvedImportance=" + committedImportance + "; success=" + success);
+                        + "; resolvedImportance=" + committedImportance
+                        + "; resolvedLockscreenVisibility=" + committedLockscreenVisibility
+                        + "; success=" + success);
             } else if (!enabled && !success && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
                     && !TextUtils.isEmpty(parentChannelId)) {
                 String migratedChannelId =
@@ -2406,6 +2415,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 if (resolved != null) {
                     channelId = resolved.getId();
                     committedImportance = resolved.getImportance();
+                    committedLockscreenVisibility = resolved.getLockscreenVisibility();
                     success = committedImportance == NotificationManager.IMPORTANCE_NONE;
                 } else {
                     success = false;
@@ -2414,7 +2424,9 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                         + conversationKey + "; removedChannelIds=" + staleChannelIds
                         + "; migratedChannelId=" + migratedChannelId + "; resolvedChannelId="
                         + (resolved != null ? resolved.getId() : "null")
-                        + "; resolvedImportance=" + committedImportance + "; success=" + success);
+                        + "; resolvedImportance=" + committedImportance
+                        + "; resolvedLockscreenVisibility=" + committedLockscreenVisibility
+                        + "; success=" + success);
             }
 
             log("set conversation channel toggle applied; enabled=" + enabled
@@ -2423,6 +2435,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     + "; parentChannelId=" + parentChannelId
                     + "; targetImportance=" + targetImportance
                     + "; committedImportance=" + committedImportance
+                    + "; committedLockscreenVisibility=" + committedLockscreenVisibility
+                    + "; bannerEnabled="
+                    + (committedImportance >= NotificationManager.IMPORTANCE_HIGH)
+                    + "; lockscreenEnabled="
+                    + isEffectiveLockscreenNotificationEnabled(committedImportance,
+                    committedLockscreenVisibility)
                     + "; success=" + success);
             return success;
         } catch (Throwable t) {
@@ -2704,6 +2722,9 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             channel.enableVibration(false);
             channel.setVibrationPattern(null);
             channel.setSound(null, null);
+            channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+        } else {
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
                 && !TextUtils.isEmpty(parentChannelId)
@@ -2711,6 +2732,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             channel.setConversationId(parentChannelId, conversationKey);
         }
         return channel;
+    }
+
+    private static boolean isConversationNotificationChannelFullyEnabled(
+            NotificationChannel channel) {
+        return channel != null
+                && channel.getImportance() >= NotificationManager.IMPORTANCE_HIGH
+                && isLockscreenNotificationEnabled(channel.getLockscreenVisibility());
+    }
+
+    private static boolean isLockscreenNotificationEnabled(int lockscreenVisibility) {
+        return lockscreenVisibility != Notification.VISIBILITY_SECRET;
+    }
+
+    private static boolean isEffectiveLockscreenNotificationEnabled(int importance,
+            int lockscreenVisibility) {
+        return importance > NotificationManager.IMPORTANCE_NONE
+                && isLockscreenNotificationEnabled(lockscreenVisibility);
     }
 
     private static int sanitizeChannelImportance(int importance) {
