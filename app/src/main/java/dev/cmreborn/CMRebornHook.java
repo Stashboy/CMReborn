@@ -6,6 +6,7 @@ import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -73,6 +74,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b0102;
     private static final int INSPECTED_ACTION_ARCHIVE_ID = 0x7f0b00d2;
     private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b0109;
+    private static final int BACKGROUND_WORK_NOTIFICATION_ID = 174344743;
+    private static final String BACKGROUND_WORK_CHANNEL_ID =
+            "bugle_broadcast_receiver_channel";
+    private static final String BACKGROUND_WORK_SILENT_CHANNEL_ID =
+            "cmreborn_hidden_background_work";
     private static final int ARCHIVE_STATUS_UNARCHIVED = 0;
     private static final int ARCHIVE_STATUS_ARCHIVED = 1;
     private static final int ARCHIVE_STATUS_KEEP_ARCHIVED = 2;
@@ -84,32 +90,33 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     // Validated on Google Messages 308183063 (RC02), 309541063 (RC03), 310684063 (RC00),
     // 310772063 (RC00), 311460063 (RC01), 311755063 (RC00), 312389063 (RC01),
     // 312983063 (RC00), 314045063 (RC00), 315659063 (RC05), 317307063 (RC00),
-    // and 317865063 (RC00).
+    // 317865063 (RC00), and 318719063 (RC00).
     private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
-            {"amlh", "ammg", "amiu", "alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
+            {"amnm", "amlh", "ammg", "amiu", "alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
     private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
-            {"eums", "ewnt", "evwd", "evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
+            {"evel", "eums", "ewnt", "evwd", "evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
     private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
-            {"dumr", "dwlv", "dvvn", "dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
+            {"dvct", "dumr", "dwlv", "dvvn", "dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
     private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
-            {"dunx", "dwnb", "dvwt", "dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
+            {"dvdz", "dunx", "dwnb", "dvwt", "dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
     private static final String[] MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES =
-            {"cogc", "cqex", "cpnp", "cpfh"};
+            {"covf", "cogc", "cqex", "cpnp", "cpfh"};
     private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
-            {"dupq", "dwou", "dvym", "dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
+            {"dvfr", "dupq", "dwou", "dvym", "dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
     private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
-            {"dupj", "dwon", "dvyf", "dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
+            {"dvfk", "dupj", "dwon", "dvyf", "dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
     private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"duub", "dwtf", "dwcx", "dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
+            {"dvkc", "duub", "dwtf", "dwcx", "dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
     private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"duuh", "dwtl", "dwdd", "dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
+            {"dvki", "duuh", "dwtl", "dwdd", "dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
     private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
-            {"dunm", "dwmq", "dvwi", "dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
+            {"dvdo", "dunm", "dwmq", "dvwi", "dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
     private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
-            {"durg#m", "dwqk#m", "dwac#m", "dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
+            {"dvhh#m", "durg#m", "dwqk#m", "dwac#m", "dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
     private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
-            {"dunc", "dwmg", "dvvy", "dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
+            {"dvde", "dunc", "dwmg", "dvvy", "dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
     private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+            "dvit#G", "dvkz#G", "dvie#M", "dvis#M",
             "duss#G", "duuy#G", "dusr#M", "dusd#M",
             "dwrw#G", "dwuc#G", "dwrv#M", "dwrh#M",
             "dwbo#G", "dwdu#G", "dwaz#M", "dwbn#M",
@@ -124,23 +131,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
     private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
-            {"fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES =
-            {"fjre", "flmr", "fkxg", "fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
+            {"fkvk", "fjre", "flmr", "fkxg", "fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
     private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
-            {"clct", "cnay", "cmjh", "clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
+            {"clrf", "clct", "cnay", "cmjh", "clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
     private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES =
-            {"fkvi", "fmqv", "fmbk", "flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
+            {"flzn", "fkvi", "fmqv", "fmbk", "flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
     private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
-            {"fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
-            {"djpe", "dloo", "dkyt", "dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
+            {"dkeu", "djpe", "dloo", "dkyt", "dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
     private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
-            {"bpkj", "brfi", "bqrj", "bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
+            {"bpyj", "bpkj", "brfi", "bqrj", "bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
     private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
-            {"ffci", "fgxq", "fgif", "ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
+            {"fggt", "ffci", "fgxq", "fgif", "ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
-            {"drgr", "dtfy", "dsph", "dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
+            {"drwi", "drgr", "dtfy", "dsph", "dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
             Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
@@ -150,6 +157,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static final Map<String, Integer> CHANNEL_IMPORTANCE_CACHE =
             new ConcurrentHashMap<>();
     private static volatile boolean attachHookInstalled;
+    private static volatile boolean backgroundWorkNotificationHookInstalled;
+    private static volatile int backgroundWorkNotificationHookMask;
     private static volatile boolean menuHookInstalled;
     private static volatile boolean overflowSelectionHookInstalled;
     private static volatile boolean archiveBackToInboxPendingFromTrigger;
@@ -173,8 +182,113 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (ENABLE_RUNTIME_PROBE) {
             hookRuntimeProbe();
         }
+        hookBackgroundWorkForegroundNotification();
         hookOverflowArchivedMenu();
         hookApplicationAttach();
+    }
+
+    private static void hookBackgroundWorkForegroundNotification() {
+        if (backgroundWorkNotificationHookInstalled) {
+            return;
+        }
+        synchronized (CMRebornHook.class) {
+            if (backgroundWorkNotificationHookInstalled) {
+                return;
+            }
+            XC_MethodHook redirectHook = new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) {
+                    Service service = param.thisObject instanceof Service
+                            ? (Service) param.thisObject : null;
+                    if (service == null || !TARGET_PACKAGE.equals(service.getPackageName())
+                            || param.args == null || param.args.length < 2
+                            || !(param.args[0] instanceof Integer)
+                            || !(param.args[1] instanceof Notification)) {
+                        return;
+                    }
+                    int notificationId = ((Integer) param.args[0]).intValue();
+                    Notification notification = (Notification) param.args[1];
+                    if (notificationId != BACKGROUND_WORK_NOTIFICATION_ID
+                            || !TextUtils.equals(BACKGROUND_WORK_CHANNEL_ID,
+                            notification.getChannelId())) {
+                        return;
+                    }
+                    try {
+                        ensureBackgroundWorkSilentChannel(service);
+                        XposedHelpers.setObjectField(notification, "mChannelId",
+                                BACKGROUND_WORK_SILENT_CHANNEL_ID);
+                        if (TextUtils.equals(BACKGROUND_WORK_SILENT_CHANNEL_ID,
+                                notification.getChannelId())) {
+                            log("background-work foreground notification redirected to blocked channel");
+                        } else {
+                            log("background-work foreground notification channel redirect did not commit");
+                        }
+                    } catch (Throwable t) {
+                        logThrowable("background-work foreground notification redirect failed", t);
+                    }
+                }
+            };
+            boolean hookedAny = false;
+            try {
+                XposedHelpers.findAndHookMethod(Service.class, "startForeground",
+                        int.class, Notification.class, redirectHook);
+                hookedAny = true;
+                backgroundWorkNotificationHookMask |= 1;
+                log("hook installed: Service.startForeground(int,Notification) background-work suppression");
+            } catch (Throwable t) {
+                logThrowable("hook failed: Service.startForeground(int,Notification)", t);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    XposedHelpers.findAndHookMethod(Service.class, "startForeground",
+                            int.class, Notification.class, int.class, redirectHook);
+                    hookedAny = true;
+                    backgroundWorkNotificationHookMask |= 2;
+                    log("hook installed: Service.startForeground(int,Notification,int) background-work suppression");
+                } catch (Throwable t) {
+                    logThrowable("hook failed: Service.startForeground(int,Notification,int)", t);
+                }
+            }
+            backgroundWorkNotificationHookInstalled = hookedAny;
+        }
+    }
+
+    private static void ensureBackgroundWorkSilentChannel(Context context) {
+        if (context == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
+        }
+        NotificationManager notificationManager = (NotificationManager) context
+                .getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notificationManager == null) {
+            throw new IllegalStateException("NotificationManager unavailable");
+        }
+        NotificationChannel existing = notificationManager.getNotificationChannel(
+                BACKGROUND_WORK_SILENT_CHANNEL_ID);
+        if (existing != null && existing.getImportance() == NotificationManager.IMPORTANCE_NONE) {
+            return;
+        }
+        if (existing != null) {
+            notificationManager.deleteNotificationChannel(BACKGROUND_WORK_SILENT_CHANNEL_ID);
+        }
+        NotificationChannel silentChannel = new NotificationChannel(
+                BACKGROUND_WORK_SILENT_CHANNEL_ID,
+                "CMReborn hidden background work",
+                NotificationManager.IMPORTANCE_NONE);
+        silentChannel.setDescription(
+                "Suppresses Google Messages' transient background-work notification.");
+        silentChannel.enableLights(false);
+        silentChannel.enableVibration(false);
+        silentChannel.setVibrationPattern(null);
+        silentChannel.setSound(null, null);
+        silentChannel.setShowBadge(false);
+        silentChannel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
+        notificationManager.createNotificationChannel(silentChannel);
+        NotificationChannel committed = notificationManager.getNotificationChannel(
+                BACKGROUND_WORK_SILENT_CHANNEL_ID);
+        if (committed == null
+                || committed.getImportance() != NotificationManager.IMPORTANCE_NONE) {
+            throw new IllegalStateException("blocked background-work channel was not committed");
+        }
     }
 
     private static void hookRuntimeProbe() {
@@ -232,6 +346,14 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                 updateRuntimeContext(context);
                                 appendRuntimeLog("Application.attach matched target package; process="
                                         + context.getApplicationInfo().processName);
+                                try {
+                                    ensureBackgroundWorkSilentChannel(context);
+                                    appendRuntimeLog("D background-work notification suppression ready; "
+                                            + "serviceHookMask="
+                                            + backgroundWorkNotificationHookMask);
+                                } catch (Throwable t) {
+                                    logThrowable("background-work silent channel setup failed", t);
+                                }
 
                                 synchronized (INSTALLED_CLASSLOADERS) {
                                     if (!INSTALLED_CLASSLOADERS.add(classLoader)) {
@@ -3614,7 +3736,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     "com.google.android.apps.messaging.shared.api.messaging.selfidentity.SelfIdentityId",
                     classLoader);
             for (String metadataOpsClass : CONVERSATION_METADATA_OPS_CLASS_CANDIDATES) {
-                for (String updateMethodName : new String[]{"j", "i"}) {
+                for (String updateMethodName : new String[]{"h", "j", "i"}) {
                     try {
                         XposedHelpers.findAndHookMethod(metadataOpsClass, classLoader,
                                 updateMethodName,
@@ -4201,6 +4323,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return XposedHelpers.callStaticMethod(futuresClass, "immediateFuture", value);
         } catch (Throwable ignored) {
             // Fall back to known internal helper classes.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("fixr", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
         }
         try {
             Class<?> futureClass = XposedHelpers.findClass("fhth", classLoader);
