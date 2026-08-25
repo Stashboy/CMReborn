@@ -90,32 +90,33 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     // Validated on Google Messages 308183063 (RC02), 309541063 (RC03), 310684063 (RC00),
     // 310772063 (RC00), 311460063 (RC01), 311755063 (RC00), 312389063 (RC01),
     // 312983063 (RC00), 314045063 (RC00), 315659063 (RC05), 317307063 (RC00),
-    // 317865063 (RC00), 318719063 (RC00), and 318930063 (RC00).
+    // 317865063 (RC00), 318719063 (RC00), 318930063 (RC00), and 319227063 (RC02).
     private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
-            {"amrc", "amnm", "amlh", "ammg", "amiu", "alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
+            {"andz", "amrc", "amnm", "amlh", "ammg", "amiu", "alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
     private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
-            {"evzk", "evel", "eums", "ewnt", "evwd", "evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
+            {"ewwq", "evzk", "evel", "eums", "ewnt", "evwd", "evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
     private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
-            {"dvun", "dvct", "dumr", "dwlv", "dvvn", "dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
+            {"dwrj", "dvun", "dvct", "dumr", "dwlv", "dvvn", "dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
     private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
-            {"dvvt", "dvdz", "dunx", "dwnb", "dvwt", "dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
+            {"dwsp", "dvvt", "dvdz", "dunx", "dwnb", "dvwt", "dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
     private static final String[] MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES =
-            {"cpmo", "covf", "cogc", "cqex", "cpnp", "cpfh"};
+            {"cqjf", "cpmo", "covf", "cogc", "cqex", "cpnp", "cpfh"};
     private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
-            {"dvxl", "dvfr", "dupq", "dwou", "dvym", "dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
+            {"dwuh", "dvxl", "dvfr", "dupq", "dwou", "dvym", "dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
     private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
-            {"dvxe", "dvfk", "dupj", "dwon", "dvyf", "dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
+            {"dwua", "dvxe", "dvfk", "dupj", "dwon", "dvyf", "dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
     private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"dwbw", "dvkc", "duub", "dwtf", "dwcx", "dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
+            {"dwys", "dwbw", "dvkc", "duub", "dwtf", "dwcx", "dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
     private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
-            {"dwcc", "dvki", "duuh", "dwtl", "dwdd", "dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
+            {"dwyy", "dwcc", "dvki", "duuh", "dwtl", "dwdd", "dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
     private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
-            {"dvvi", "dvdo", "dunm", "dwmq", "dvwi", "dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
+            {"dwse", "dvvi", "dvdo", "dunm", "dwmq", "dvwi", "dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
     private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
-            {"dvzb#m", "dvhh#m", "durg#m", "dwqk#m", "dwac#m", "dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
+            {"dwvx#m", "dvzb#m", "dvhh#m", "durg#m", "dwqk#m", "dwac#m", "dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
     private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
-            {"dvuy", "dvde", "dunc", "dwmg", "dvvy", "dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
+            {"dwru", "dvuy", "dvde", "dunc", "dwmg", "dvvy", "dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
     private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+            "dwxj#G", "dwzp#G", "dwwu#M", "dwxi#M",
             "dwan#G", "dwct#G", "dvzy#M", "dwam#M",
             "dvit#G", "dvkz#G", "dvie#M", "dvis#M",
             "duss#G", "duuy#G", "dusr#M", "dusd#M",
@@ -132,23 +133,23 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
     private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
-            {"flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fmnm", "flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES =
-            {"flrc", "fkvk", "fjre", "flmr", "fkxg", "fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
+            {"fmpg", "flrc", "fkvk", "fjre", "flmr", "fkxg", "fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
     private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
-            {"cmit", "clrf", "clct", "cnay", "cmjh", "clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
+            {"cnfb", "cmit", "clrf", "clct", "cnay", "cmjh", "clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
     private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES =
-            {"fmvf", "flzn", "fkvi", "fmqv", "fmbk", "flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
+            {"fntk", "fmvf", "flzn", "fkvi", "fmqv", "fmbk", "flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
     private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
-            {"flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
+            {"fmnm", "flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
     private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
-            {"dkwm", "dkeu", "djpe", "dloo", "dkyt", "dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
+            {"dlty", "dkwm", "dkeu", "djpe", "dloo", "dkyt", "dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
     private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
-            {"bqke", "bpyj", "bpkj", "brfi", "bqrj", "bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
+            {"brbi", "bqke", "bpyj", "bpkj", "brfi", "bqrj", "bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
     private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
-            {"fhcn", "fggt", "ffci", "fgxq", "fgif", "ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
+            {"fiao", "fhcn", "fggt", "ffci", "fgxq", "fgif", "ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
     private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
-            {"dsoc", "drwi", "drgr", "dtfy", "dsph", "dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
+            {"dtky", "dsoc", "drwi", "drgr", "dtfy", "dsph", "dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
             Collections.newSetFromMap(new WeakHashMap<ClassLoader, Boolean>());
@@ -4324,6 +4325,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return XposedHelpers.callStaticMethod(futuresClass, "immediateFuture", value);
         } catch (Throwable ignored) {
             // Fall back to known internal helper classes.
+        }
+        try {
+            Class<?> futureClass = XposedHelpers.findClass("fkrn", classLoader);
+            return XposedHelpers.callStaticMethod(futureClass, "e", value);
+        } catch (Throwable ignored) {
+            // Continue fallback.
         }
         try {
             Class<?> futureClass = XposedHelpers.findClass("fjtj", classLoader);
