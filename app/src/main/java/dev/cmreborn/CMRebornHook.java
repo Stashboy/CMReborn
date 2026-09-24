@@ -71,9 +71,9 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox";
     private static final String ARCHIVED_FOLDER_ENUM_NAME = "ARCHIVED";
     private static final String SEARCH_TRIGGER = "helloworld";
-    private static final int INSPECTED_ACTION_SHOW_ARCHIVED_ID = 0x7f0b00f0;
-    private static final int INSPECTED_ACTION_ARCHIVE_ID = 0x7f0b00c1;
-    private static final int INSPECTED_ACTION_UNARCHIVE_ID = 0x7f0b00f7;
+    private static int INSPECTED_ACTION_SHOW_ARCHIVED_ID = -1;
+    private static int INSPECTED_ACTION_ARCHIVE_ID = -1;
+    private static int INSPECTED_ACTION_UNARCHIVE_ID = -1;
     private static final int BACKGROUND_WORK_NOTIFICATION_ID = 174344743;
     private static final String BACKGROUND_WORK_CHANNEL_ID =
             "bugle_broadcast_receiver_channel";
@@ -92,31 +92,31 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     // 312983063 (RC00), 314045063 (RC00), 315659063 (RC05), 317307063 (RC00),
     // 317865063 (RC00), 318719063 (RC00), 318930063 (RC00), 319227063 (RC02),
     // 321057063 (RC06), 321562063 (RC05), 322070063 (RC07), and 322660063 (RC04).
-    private static final String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
+    private static String[] PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
             {"anuz", "annn", "anlb", "anjq", "andz", "amrc", "amnm", "amlh", "ammg", "amiu", "alyh", "alwc", "algc", "aldv", "aldm", "akzi", "aksj", "akku", "akfq"};
-    private static final String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
+    private static String[] PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES =
             {"fadq", "ezty", "ezdy", "eyyj", "ewwq", "evzk", "evel", "eums", "ewnt", "evwd", "evoj", "evqc", "eure", "etql", "alhw", "alds", "akwt", "akpe", "akka"};
-    private static final String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
+    private static String[] SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES =
             {"dzoi", "dzek", "dyod", "dyjd", "dwrj", "dvun", "dvct", "dumr", "dwlv", "dvvn", "dvou", "dvrd", "duva", "dubk", "dtuv", "dtje", "dsyx", "drlp", "dqlb"};
-    private static final String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
+    private static String[] SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES =
             {"dzpo", "dzfq", "dypj", "dykj", "dwsp", "dvvt", "dvdz", "dunx", "dwnb", "dvwt", "dvqa", "dvsj", "duwg", "ducq", "dtwb", "dtkk", "dtad", "drmv", "dqmh"};
-    private static final String[] MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES =
+    private static String[] MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES =
             {"csum", "csiq", "crvb", "crst", "cqjf", "cpmo", "covf", "cogc", "cqex", "cpnp", "cpfh"};
-    private static final String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
+    private static String[] SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES =
             {"dzrg", "dzhi", "dyrb", "dymb", "dwuh", "dvxl", "dvfr", "dupq", "dwou", "dvym", "dvrt", "dvuc", "duxz", "duej", "dtxu", "dtmd", "dtbw", "droo", "dqoa"};
-    private static final String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
+    private static String[] SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES =
             {"dzqz", "dzhb", "dyqu", "dylu", "dwua", "dvxe", "dvfk", "dupj", "dwon", "dvyf", "dvrm", "dvtv", "duxs", "duec", "dtxn", "dtlw", "dtbp", "droh", "dqnt"};
-    private static final String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
+    private static String[] SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES =
             {"dzvs", "dzlu", "dyvn", "dyqn", "dwys", "dwbw", "dvkc", "duub", "dwtf", "dwcx", "dvwe", "dvyn", "dvck", "duiu", "ducf", "dtqo", "dtgh", "drsy", "dqsk"};
-    private static final String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
+    private static String[] SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES =
             {"dzvy", "dzma", "dyvt", "dyqt", "dwyy", "dwcc", "dvki", "duuh", "dwtl", "dwdd", "dvwk", "dvyt", "dvcq", "duja", "ducl", "dtqu", "dtgn", "drte", "dqsq"};
-    private static final String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
+    private static String[] SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES =
             {"dzpd", "dzff", "dyoy", "dyjy", "dwse", "dvvi", "dvdo", "dunm", "dwmq", "dvwi", "dvpp", "dvry", "duvv", "ducf", "dtvq", "dtjz", "dszs", "drmk", "dqlw"};
-    private static final String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
+    private static String[] SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES =
             {"dzsx#m", "dziz#m", "dyss#m", "dyns#m", "dwvx#m", "dvzb#m", "dvhh#m", "durg#m", "dwqk#m", "dwac#m", "dvtj#m", "dvvs#m", "duzp#m", "dufz#m", "dtzk#m", "dtnt#m", "dtdm#m", "drqd#l", "dqpp#l"};
-    private static final String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
+    private static String[] SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES =
             {"dzot", "dzev", "dyoo", "dyjo", "dwru", "dvuy", "dvde", "dunc", "dwmg", "dvvy", "dvpf", "dvro", "duvl", "dubv", "dtvg", "dtjp", "dszi", "drma", "dqlm"};
-    private static final String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
+    private static String[] ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = {
             "dzwp#G", "dzuj#G", "dztu#M", "dzui#M",
             "dzmr#G", "dzkl#G", "dzjw#M", "dzkk#M",
             "dyue#G", "dywk#G", "dytp#M", "dyud#M",
@@ -137,25 +137,25 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             "drrp#G", "drtv#G", "drro#M", "drra#M",
             "dqrb#G", "dqth#G", "dqra#M", "dqqm#M"
     };
-    private static final String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
+    private static String[] IMMUTABLE_LIST_CLASS_CANDIDATES =
             {"fpvv", "fplc", "foun", "fopf", "fmnm", "flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
-    private static final String[] IMMUTABLE_SET_CLASS_CANDIDATES =
+    private static String[] IMMUTABLE_SET_CLASS_CANDIDATES =
             {"fpxp", "fpmw", "fowh", "foqz", "fmpg", "flrc", "fkvk", "fjre", "flmr", "fkxg", "fkih", "fkji", "fhhh", "fgmk", "fggx", "fgrl", "fgfk", "feof", "feaw"};
-    private static final String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
+    private static String[] ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES =
             {"cppt", "cpew", "cosl", "coqf", "cnfb", "cmit", "clrf", "clct", "cnay", "cmjh", "clzn", "cmfa", "cllh", "clan", "ckya", "cknk", "ckdj", "cjcn", "cikq"};
-    private static final String[] ARCHIVE_REASON_CLASS_CANDIDATES =
+    private static String[] ARCHIVE_REASON_CLASS_CANDIDATES =
             {"frce", "fqrg", "fqar", "fpvj", "fntk", "fmvf", "flzn", "fkvi", "fmqv", "fmbk", "flju", "flku", "fiir", "fhnv", "fhii", "fhuj", "ffrd", "ffdu"};
-    private static final String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
+    private static String[] ARCHIVE_ID_LIST_CLASS_CANDIDATES =
             {"fpvv", "fplc", "foun", "fopf", "fmnm", "flpi", "fktq", "fjpk", "flkx", "fkvm", "fkgn", "fkho", "fhfn", "fgkq", "fgfd", "fgpr", "fgdq", "feml", "fdzc"};
-    private static final String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
+    private static String[] ARCHIVE_API_IMPL_CLASS_CANDIDATES =
             {"donr", "docp", "dnnd", "dnko", "dlty", "dkwm", "dkeu", "djpe", "dloo", "dkyt", "dkpe", "dkrd", "djvu", "djfw", "djae", "diou", "dieo", "dgtz", "dfwt"};
-    private static final String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
+    private static String[] CONVERSATION_METADATA_OPS_CLASS_CANDIDATES =
             {"bspg", "bsfs", "bryf", "brvz", "brbi", "bqke", "bpyj", "bpkj", "brfi", "bqrj", "bqmt", "bqse", "bpxw", "bpoi", "bplw", "bpcv", "bosz", "bnsq", "bmuo"};
-    private static final String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
+    private static String[] ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES =
             {"flix", "fkyg", "fkht", "fkcn", "fiao", "fhcn", "fggt", "ffci", "fgxq", "fgif", "ffwn", "ffxr", "fcwb", "fbzo", "fbtu", "fceb", "fbsj", "fabf", "ezny"};
-    private static final String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
+    private static String[] ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES =
             {"dwfy", "dvfm", "dvce", "dtky", "dsoc", "drwi", "drgr", "dtfy", "dsph", "dsij", "dskr", "droo", "dqxs", "dqra", "dqfp", "dpvi", "dojd", "dniq"};
-    private static final String[] CURRENT_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
+    private static String[] CURRENT_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES =
             {"aden", "acxc"};
 
     private static final Set<ClassLoader> INSTALLED_CLASSLOADERS =
@@ -176,6 +176,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
     private static volatile WeakReference<Context> runtimeContextRef =
             new WeakReference<>(null);
     private static volatile File runtimeLogDirectory;
+    private static volatile HookResolver hookResolver;
+    private static final String CONVERSATION_ID_TYPE_CLASS =
+            "com.google.android.apps.messaging.shared.datamodel.data.datatypes.ConversationIdType";
+    private static final Map<String, Method> TYPED_GETTERS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<Class<?>, Method> ROW_GETTERS = new java.util.concurrent.ConcurrentHashMap<>();
     private static volatile boolean runtimeProbeToastShown;
     private static final ThreadLocal<Integer> USER_UNARCHIVE_ACTION_DEPTH = new ThreadLocal<>();
 
@@ -239,7 +244,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             };
             boolean hookedAny = false;
             try {
-                XposedHelpers.findAndHookMethod(Service.class, "startForeground",
+                hookResolvedMethod(Service.class, "startForeground",
                         int.class, Notification.class, redirectHook);
                 hookedAny = true;
                 backgroundWorkNotificationHookMask |= 1;
@@ -249,7 +254,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 try {
-                    XposedHelpers.findAndHookMethod(Service.class, "startForeground",
+                    hookResolvedMethod(Service.class, "startForeground",
                             int.class, Notification.class, int.class, redirectHook);
                     hookedAny = true;
                     backgroundWorkNotificationHookMask |= 2;
@@ -302,7 +307,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
     private static void hookRuntimeProbe() {
         try {
-            XposedHelpers.findAndHookMethod(Activity.class, "onResume", new XC_MethodHook() {
+            hookResolvedMethod(Activity.class, "onResume", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Activity activity = (Activity) param.thisObject;
@@ -337,7 +342,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 return;
             }
             try {
-                XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class,
+                hookResolvedMethod(Application.class, "attach", Context.class,
                         new XC_MethodHook() {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
@@ -371,6 +376,11 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                 }
 
                                 log("target package matched; installing app hooks");
+                                INSPECTED_ACTION_SHOW_ARCHIVED_ID = currentActionId(context, "action_show_archived");
+                                INSPECTED_ACTION_ARCHIVE_ID = currentActionId(context, "action_archive");
+                                INSPECTED_ACTION_UNARCHIVE_ID = currentActionId(context, "action_unarchive");
+                                hookResolver = HookResolver.resolve(context, CMRebornHook::logDiscovery);
+                                applyResolvedTargets();
                                 resolveRuntimeClasses(classLoader);
                                 Rc03UiHooks.install(classLoader);
                                 Rc03SearchHooks.install(classLoader);
@@ -383,6 +393,94 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             } catch (Throwable t) {
                 logThrowable("hook failed: Application.attach", t);
             }
+        }
+    }
+
+    private static int currentActionId(Context context, String name) {
+        int id = context.getResources().getIdentifier(name, "id", TARGET_PACKAGE);
+        return id == 0 ? -1 : id;
+    }
+
+    private static void applyResolvedTargets() {
+        PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES = hookResolver.classes("profile",
+                PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES);
+        PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES = hookResolver.classes("visibility",
+                PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES);
+        SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES = hookResolver.classes("searchHome",
+                SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES);
+        SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES = hookResolver.classes("category",
+                SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES);
+        MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES = hookResolver.classes("collector",
+                MESSAGE_SEARCH_RESULT_COLLECTOR_CLASS_CANDIDATES);
+        SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES = hookResolver.classes("viewAbstract",
+                SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES);
+        SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES = hookResolver.classes("viewConcrete",
+                SEARCH_VIEW_DATA_CONCRETE_CLASS_CANDIDATES);
+        SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES = hookResolver.classes("conversationAdapter",
+                SEARCH_CONVERSATION_RESULTS_ADAPTER_CLASS_CANDIDATES);
+        SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES = hookResolver.classes("starredAdapter",
+                SEARCH_STARRED_RESULTS_ADAPTER_CLASS_CANDIDATES);
+        SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES = hookResolver.classes("suggestion",
+                SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES);
+        SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES = hookResolver.classes("contactTap",
+                SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES);
+        IMMUTABLE_LIST_CLASS_CANDIDATES = hookResolver.classes("immutableList",
+                IMMUTABLE_LIST_CLASS_CANDIDATES);
+        IMMUTABLE_SET_CLASS_CANDIDATES = hookResolver.classes("immutableSet",
+                IMMUTABLE_SET_CLASS_CANDIDATES);
+        ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES = hookResolver.classes("status",
+                ARCHIVE_STATUS_ENUM_CLASS_CANDIDATES);
+        ARCHIVE_REASON_CLASS_CANDIDATES = hookResolver.classes("reason",
+                ARCHIVE_REASON_CLASS_CANDIDATES);
+        ARCHIVE_ID_LIST_CLASS_CANDIDATES = hookResolver.classes("immutableList",
+                ARCHIVE_ID_LIST_CLASS_CANDIDATES);
+        ARCHIVE_API_IMPL_CLASS_CANDIDATES = hookResolver.classes("archiveApi",
+                ARCHIVE_API_IMPL_CLASS_CANDIDATES);
+        CONVERSATION_METADATA_OPS_CLASS_CANDIDATES = hookResolver.classes("metadata",
+                CONVERSATION_METADATA_OPS_CLASS_CANDIDATES);
+        ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES = hookResolver.classes("intent",
+                ARCHIVE_INTENT_HELPER_CLASS_CANDIDATES);
+        ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES = hookResolver.classes("selection",
+                ARCHIVED_SELECTION_CONTROLLER_CLASS_CANDIDATES);
+        CURRENT_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES = hookResolver.classes("actionProvider",
+                CURRENT_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES);
+        SEARCH_CONTACT_RESULTS_ADAPTER_METHOD_CANDIDATES = hookResolver.adapter(
+                "contactAdapter", "dzsx#m");
+        String[] roles = {"videoAdapter", "mediaAdapter", "linkAdapter", "locationAdapter"};
+        String[] validatedAdapters = {"dzwp#G", "dzuj#G", "dztu#M", "dzui#M"};
+        java.util.ArrayList<String> adapters = new java.util.ArrayList<>();
+        for (int i = 0; i < roles.length; i++) {
+            Collections.addAll(adapters, hookResolver.adapter(roles[i],
+                    validatedAdapters[i]));
+        }
+        ATTACHMENT_RESULT_ADAPTER_METHOD_CANDIDATES = adapters.toArray(new String[0]);
+    }
+
+    private static XC_MethodHook.Unhook hookResolvedMethod(String className,
+            ClassLoader loader, String methodName, Object... arguments) {
+        return hookResolvedMethod(XposedHelpers.findClass(className, loader), methodName, arguments);
+    }
+
+    private static XC_MethodHook.Unhook hookResolvedMethod(Class<?> owner,
+            String methodName, Object... arguments) {
+        HookResolver resolver = hookResolver;
+        if (resolver == null || owner.getName().startsWith("android.")
+                || methodName.startsWith("on")) {
+            return XposedHelpers.findAndHookMethod(owner, methodName, arguments);
+        }
+        try {
+            Class<?>[] types = new Class<?>[arguments.length - 1];
+            for (int i = 0; i < types.length; i++) {
+                types[i] = arguments[i] instanceof Class<?> ? (Class<?>) arguments[i]
+                        : XposedHelpers.findClass((String) arguments[i], owner.getClassLoader());
+            }
+            // Attachment candidates already carry their discovered method name.
+            Method resolved = resolver.hookMethod(owner, methodName, types);
+            resolved.setAccessible(true);
+            return XposedBridge.hookMethod(resolved, (XC_MethodHook) arguments[arguments.length - 1]);
+        } catch (Exception error) {
+            throw new IllegalArgumentException("No validated hook: " + owner.getName()
+                    + "." + methodName, error);
         }
     }
 
@@ -446,7 +544,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 return;
             }
             try {
-                XposedHelpers.findAndHookMethod(Activity.class, "onPrepareOptionsMenu", Menu.class,
+                hookResolvedMethod(Activity.class, "onPrepareOptionsMenu", Menu.class,
                         new XC_MethodHook() {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
@@ -563,7 +661,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 return;
             }
             try {
-                XposedHelpers.findAndHookMethod(Activity.class, "onOptionsItemSelected",
+                hookResolvedMethod(Activity.class, "onOptionsItemSelected",
                         MenuItem.class, new XC_MethodHook() {
                             @Override
                             protected void beforeHookedMethod(MethodHookParam param) {
@@ -651,7 +749,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         try {
             Class<?> zeroStateSearchBoxClass = XposedHelpers.findClass(ZERO_STATE_SEARCH_BOX_CLASS,
                     classLoader);
-            XposedHelpers.findAndHookMethod(zeroStateSearchBoxClass, "onFinishInflate",
+            hookResolvedMethod(zeroStateSearchBoxClass, "onFinishInflate",
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
@@ -736,7 +834,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         for (String className : SEARCH_HOME_FRAGMENT_CLASS_CANDIDATES) {
             for (String methodName : new String[]{"M", "N"}) {
                 try {
-                    XposedHelpers.findAndHookMethod(className, classLoader, methodName,
+                    hookResolvedMethod(className, classLoader, methodName,
                             LayoutInflater.class, ViewGroup.class, Bundle.class,
                             new XC_MethodHook() {
                                 @Override
@@ -788,7 +886,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         for (String className : SEARCH_CATEGORY_PROVIDER_CLASS_CANDIDATES) {
             try {
                 Class<?> candidateClass = XposedHelpers.findClass(className, classLoader);
-                Method method = findNoArgMethodReturning(candidateClass, "b",
+                Method method = hookResolver.method("category");
+                if (method == null) method = findNoArgMethodReturning(candidateClass, "b",
                         "com.google.common.util.concurrent.ListenableFuture", classLoader);
                 if (method == null) {
                     continue;
@@ -821,9 +920,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 int hookedMethods = 0;
                 for (Method method : collectorClass.getDeclaredMethods()) {
                     Class<?>[] parameterTypes = method.getParameterTypes();
-                    boolean successCallback = "c".equals(method.getName())
+                    Method resolvedSuccess = hookResolver.method("collectorSuccess");
+                    Method resolvedFailure = hookResolver.method("collectorFailure");
+                    boolean successCallback = (resolvedSuccess != null
+                            ? resolvedSuccess.equals(method) : "c".equals(method.getName()))
                             && parameterTypes.length == 1;
-                    boolean failureCallback = "b".equals(method.getName())
+                    boolean failureCallback = (resolvedFailure != null
+                            ? resolvedFailure.equals(method) : "b".equals(method.getName()))
                             && parameterTypes.length == 2
                             && parameterTypes[0] == String.class;
                     if (!successCallback && !failureCallback) {
@@ -990,10 +1093,15 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return viewData;
         }
         try {
-            Object starred = XposedHelpers.callMethod(viewData, "c");
-            Object conversationList = XposedHelpers.callMethod(viewData, "a");
-            Object noMatchingParts = XposedHelpers.callMethod(viewData, "d");
-            Object semantic = XposedHelpers.callMethod(viewData, "b");
+            boolean discoveredFields = hookResolver != null && hookResolver.hasViewFields();
+            Object starred = discoveredFields ? hookResolver.field("viewStarred", viewData)
+                    : XposedHelpers.callMethod(viewData, "c");
+            Object conversationList = discoveredFields ? hookResolver.field("viewConversations", viewData)
+                    : XposedHelpers.callMethod(viewData, "a");
+            Object noMatchingParts = discoveredFields ? hookResolver.field("viewNoMatching", viewData)
+                    : XposedHelpers.callMethod(viewData, "d");
+            Object semantic = discoveredFields ? hookResolver.field("viewSemantic", viewData)
+                    : XposedHelpers.callMethod(viewData, "b");
 
             int beforeStarred = collectionSize(starred);
             int beforeConversation = collectionSize(conversationList);
@@ -1119,6 +1227,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return ARCHIVE_STATUS_UNKNOWN;
         }
         try {
+            String statusType = hookResolver != null ? hookResolver.className("status") : null;
+            Object status = uniqueTypedGetter(searchRowModel(item), statusType);
+            if (looksLikeArchiveStatusEnum(status)) return archiveStatusCodeFromObject(status);
+        } catch (Throwable ignored) {
+            // Older payloads can still use the evidence-mapped accessors below.
+        }
+        try {
             // Google Messages 322660063 stores the current row model under i();
             // aoxt.C() is the archive-status enum accessor.
             Object conversationData = XposedHelpers.callMethod(item, "i");
@@ -1162,25 +1277,67 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         }
     }
 
+    private static Method uniqueTypedGetterMethod(Class<?> owner, String returnType) {
+        if (owner == null || returnType == null) return null;
+        String key = owner.getName() + "#" + returnType;
+        Method cached = TYPED_GETTERS.get(key);
+        if (cached != null) return cached;
+        Method found = null;
+        for (Method method : owner.getMethods()) {
+            if (Modifier.isStatic(method.getModifiers()) || method.isBridge()
+                    || method.getParameterCount() != 0
+                    || !method.getReturnType().getName().equals(returnType)) continue;
+            if (found != null) return null;
+            found = method;
+        }
+        if (found != null) {
+            found.setAccessible(true);
+            TYPED_GETTERS.put(key, found);
+        }
+        return found;
+    }
+
+    private static Object uniqueTypedGetter(Object target, String returnType) throws Exception {
+        if (target == null) return null;
+        Method getter = uniqueTypedGetterMethod(target.getClass(), returnType);
+        return getter != null ? getter.invoke(target) : null;
+    }
+
+    private static Object searchRowModel(Object item) throws Exception {
+        if (item == null || hookResolver == null) return null;
+        Method getter = ROW_GETTERS.get(item.getClass());
+        if (getter == null) {
+            String status = hookResolver.className("status");
+            for (Method candidate : item.getClass().getMethods()) {
+                if (Modifier.isStatic(candidate.getModifiers()) || candidate.isBridge()
+                        || candidate.getParameterCount() != 0) continue;
+                Class<?> rowType = candidate.getReturnType();
+                if (uniqueTypedGetterMethod(rowType, CONVERSATION_ID_TYPE_CLASS) == null
+                        || uniqueTypedGetterMethod(rowType, status) == null) continue;
+                if (getter != null) return null;
+                getter = candidate;
+            }
+            if (getter == null) return null;
+            getter.setAccessible(true);
+            ROW_GETTERS.put(item.getClass(), getter);
+            log("search row getter resolved by conversation-id and archive-status types");
+        }
+        return getter.invoke(item);
+    }
+
     private static Object extractConversationIdTypeFromSearchViewItem(Object item) {
         if (item == null) {
             return null;
         }
         try {
-            // Google Messages 322660063: aozk.i() -> aoxt, aoxt.q() ->
-            // ConversationIdType.
-            Object rowModel = XposedHelpers.callMethod(item, "i");
-            if (rowModel != null) {
-                Object conversationId = XposedHelpers.callMethod(rowModel, "q");
-                if (looksLikeConversationIdType(conversationId)) {
-                    return conversationId;
-                }
-            }
+            Object rowModel = searchRowModel(item);
+            Object conversationId = uniqueTypedGetter(rowModel, CONVERSATION_ID_TYPE_CLASS);
+            if (looksLikeConversationIdType(conversationId)) return conversationId;
         } catch (Throwable ignored) {
             // Try previous search-item shapes.
         }
         try {
-            // Google Messages 322070063: aorx.i() -> aoqc, aoqc.z() ->
+            // Google Messages 322660063 / 322070063: i() -> row model, z() ->
             // ConversationIdType.
             Object rowModel = XposedHelpers.callMethod(item, "i");
             if (rowModel != null) {
@@ -1442,7 +1599,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             for (String viewDataClassName : SEARCH_VIEW_DATA_ABSTRACT_CLASS_CANDIDATES) {
                 try {
                     Class<?> viewDataClass = XposedHelpers.findClass(viewDataClassName, classLoader);
-                    XposedHelpers.findAndHookMethod(adapterClassName, classLoader, "F",
+                    hookResolvedMethod(adapterClassName, classLoader, "F",
                             viewDataClass, buildSearchResultAdapterHook(sourceLabel));
                     log("hook installed: " + adapterClassName + ".F(" + viewDataClassName + ") "
                             + sourceLabel + " archived-result UI filter");
@@ -1514,7 +1671,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return false;
         }
         try {
-            XposedHelpers.findAndHookMethod(targetClass, methodName, java.util.List.class,
+            hookResolvedMethod(targetClass, methodName, java.util.List.class,
                     hook);
             log("hook installed: " + className + "." + methodName + "(List) attachment archive filter");
             return true;
@@ -1546,7 +1703,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         boolean hookedAny = false;
         for (String className : SEARCH_SUGGESTION_FILTER_CLASS_CANDIDATES) {
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "performFiltering",
+                hookResolvedMethod(className, classLoader, "performFiltering",
                         CharSequence.class, buildSearchSuggestionFilterHook());
                 log("hook installed: " + className
                         + ".performFiltering(CharSequence) archived-suggestion filter");
@@ -1608,7 +1765,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             String className = candidate.substring(0, separator);
             String methodName = candidate.substring(separator + 1);
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, methodName,
+                hookResolvedMethod(className, classLoader, methodName,
                         java.util.List.class,
                         buildSearchContactResultsHook());
                 log("hook installed: " + className + "." + methodName
@@ -1651,7 +1808,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         boolean hookedAny = false;
         for (String className : SEARCH_CONTACT_TAP_HANDLER_CLASS_CANDIDATES) {
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "c", Object.class,
+                hookResolvedMethod(className, classLoader, "c", Object.class,
                         Object.class, buildSearchContactTapHook());
                 log("hook installed: " + className + ".c(Object,Object) contact tap open/block policy");
                 hookedAny = true;
@@ -2247,7 +2404,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             boolean hookedAny = false;
             for (String archiveApiClass : ARCHIVE_API_IMPL_CLASS_CANDIDATES) {
                 try {
-                    XposedHelpers.findAndHookMethod(archiveApiClass, classLoader, "b",
+                    hookResolvedMethod(archiveApiClass, classLoader, "b",
                             conversationIdTypeClass, archiveStatusClass, eventReasonClass,
                             boolean.class, new XC_MethodHook() {
                                 @Override
@@ -2279,7 +2436,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                     try {
                         Class<?> conversationIdListClass = XposedHelpers.findClass(
                                 conversationIdListClassName, classLoader);
-                        XposedHelpers.findAndHookMethod(archiveApiClass, classLoader, "c",
+                        hookResolvedMethod(archiveApiClass, classLoader, "c",
                                 conversationIdListClass, archiveStatusClass, eventReasonClass,
                                 new XC_MethodHook() {
                                     @Override
@@ -3224,7 +3381,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 log("hook unavailable: current archived action status class not found");
                 return;
             }
-            XposedHelpers.findAndHookMethod(archiveStatusClass, "g", new XC_MethodHook() {
+            hookResolvedMethod(archiveStatusClass, "g", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     if (!(param.thisObject instanceof Enum<?>)
@@ -3273,7 +3430,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
             boolean hookedClass = false;
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "b", new XC_MethodHook() {
+                hookResolvedMethod(className, classLoader, "b", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
@@ -3295,7 +3452,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
 
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "c", new XC_MethodHook() {
+                hookResolvedMethod(className, classLoader, "c", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
@@ -3317,7 +3474,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
 
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "e", new XC_MethodHook() {
+                hookResolvedMethod(className, classLoader, "e", new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         try {
@@ -3339,7 +3496,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
 
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "onCreateActionMode",
+                hookResolvedMethod(className, classLoader, "onCreateActionMode",
                         ActionMode.class, Menu.class, new XC_MethodHook() {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
@@ -3365,7 +3522,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             }
 
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "onPrepareActionMode",
+                hookResolvedMethod(className, classLoader, "onPrepareActionMode",
                         ActionMode.class, Menu.class, new XC_MethodHook() {
                             @Override
                             protected void afterHookedMethod(MethodHookParam param) {
@@ -3413,7 +3570,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 continue;
             }
             try {
-                XposedHelpers.findAndHookMethod(className, classLoader, "onActionItemClicked",
+                hookResolvedMethod(className, classLoader, "onActionItemClicked",
                         ActionMode.class, MenuItem.class, new XC_MethodHook() {
                             @Override
                             protected void beforeHookedMethod(MethodHookParam param) {
@@ -3782,7 +3939,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
     private static void hookArchivedBackToInbox(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(ARCHIVED_ACTIVITY, classLoader, "onBackPressed",
+            hookResolvedMethod(ARCHIVED_ACTIVITY, classLoader, "onBackPressed",
                     new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
@@ -3833,7 +3990,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             if (archiveReasonClass != null) {
                 for (String archiveApiClass : ARCHIVE_API_IMPL_CLASS_CANDIDATES) {
                     try {
-                        XposedHelpers.findAndHookMethod(archiveApiClass, classLoader, "a",
+                        hookResolvedMethod(archiveApiClass, classLoader, "a",
                                 conversationIdTypeClass, archiveStatusClass, archiveReasonClass,
                                 new XC_MethodHook() {
                                     @Override
@@ -3849,7 +4006,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                         // Try next signature/class candidate.
                     }
                     try {
-                        XposedHelpers.findAndHookMethod(archiveApiClass, classLoader, "b",
+                        hookResolvedMethod(archiveApiClass, classLoader, "b",
                                 conversationIdTypeClass, archiveStatusClass, archiveReasonClass,
                                 boolean.class, new XC_MethodHook() {
                                     @Override
@@ -3869,7 +4026,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                         try {
                             Class<?> idListClass = XposedHelpers.findClass(idListClassName,
                                     classLoader);
-                            XposedHelpers.findAndHookMethod(archiveApiClass, classLoader, "c",
+                            hookResolvedMethod(archiveApiClass, classLoader, "c",
                                     idListClass, archiveStatusClass, archiveReasonClass,
                                     new XC_MethodHook() {
                                         @Override
@@ -3904,7 +4061,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             for (String metadataOpsClass : CONVERSATION_METADATA_OPS_CLASS_CANDIDATES) {
                 for (String updateMethodName : new String[]{"h", "j", "i"}) {
                     try {
-                        XposedHelpers.findAndHookMethod(metadataOpsClass, classLoader,
+                        hookResolvedMethod(metadataOpsClass, classLoader,
                                 updateMethodName,
                                 conversationIdTypeClass,
                                 messageIdTypeClass,
@@ -3935,7 +4092,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                 }
 
                 try {
-                    XposedHelpers.findAndHookMethod(metadataOpsClass, classLoader, "b",
+                    hookResolvedMethod(metadataOpsClass, classLoader, "b",
                             conversationIdTypeClass,
                             boolean.class,
                             archiveStatusClass,
@@ -4419,6 +4576,12 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (providerClass == null || hiddenVisibilityHandlerClass == null) {
             return null;
         }
+        Method discovered = hookResolver != null ? hookResolver.method("profile") : null;
+        if (discovered != null && discovered.getDeclaringClass() == providerClass
+                && profileActionReturnTypeSupportsHiddenHandler(discovered.getReturnType(),
+                hiddenVisibilityHandlerClass)) {
+            return discovered;
+        }
         for (Method method : providerClass.getDeclaredMethods()) {
             if (!"a".equals(method.getName()) || method.getParameterTypes().length != 0) {
                 continue;
@@ -4452,11 +4615,14 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         for (String className : PROFILE_HIDDEN_VISIBILITY_CLASS_CANDIDATES) {
             try {
                 Class<?> candidate = XposedHelpers.findClass(className, classLoader);
-                Field hiddenState = candidate.getDeclaredField("c");
-                if (hiddenState.getType() != boolean.class) {
+                long stateFields = java.util.Arrays.stream(candidate.getDeclaredFields())
+                        .filter(f -> !Modifier.isStatic(f.getModifiers()) && f.getType() == boolean.class).count();
+                long setters = java.util.Arrays.stream(candidate.getDeclaredMethods())
+                        .filter(m -> m.getReturnType() == void.class
+                                && java.util.Arrays.equals(m.getParameterTypes(), new Class<?>[]{boolean.class})).count();
+                if (stateFields != 1 || setters != 1) {
                     continue;
                 }
-                candidate.getDeclaredMethod("b", boolean.class);
                 XposedHelpers.newInstance(candidate);
                 return candidate;
             } catch (Throwable ignored) {
@@ -4484,159 +4650,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
     private static Object buildImmediateFuture(ClassLoader classLoader, Object value) {
         try {
-            Class<?> futuresClass = XposedHelpers.findClass(
-                    "com.google.common.util.concurrent.Futures", classLoader);
-            return XposedHelpers.callStaticMethod(futuresClass, "immediateFuture", value);
-        } catch (Throwable ignored) {
-            // Fall back to known internal helper classes.
+            Class<?> contract = XposedHelpers.findClass(
+                    "com.google.common.util.concurrent.ListenableFuture", classLoader);
+            return ImmediateFutureFactory.create(contract, value);
+        } catch (Throwable failure) {
+            logThrowable("immediate future creation failed", failure);
+            return null;
         }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fnzt", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue with historical fallbacks.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fukj", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "i", value);
-        } catch (Throwable ignored) {
-            // Continue with historical fallbacks.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fmyn", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fmtf", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fkrn", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fjtj", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fixr", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fhth", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fizg", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fjos", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("finm", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fiop", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("ffmn", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fitm", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "i", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fkze", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "i", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("feum", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fekd", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fept", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fcrp", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("feiu", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            if (value instanceof Iterable) {
-                Class<?> futureClass = XposedHelpers.findClass("fitm", classLoader);
-                return XposedHelpers.callStaticMethod(futureClass, "e", value);
-            }
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fbpi", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fbje", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // Continue fallback.
-        }
-        try {
-            Class<?> futureClass = XposedHelpers.findClass("fboy", classLoader);
-            return XposedHelpers.callStaticMethod(futureClass, "e", value);
-        } catch (Throwable ignored) {
-            // No more fallback options.
-        }
-        return null;
     }
 
     private static Object readFieldIfPresent(Object target, String fieldName) {
@@ -4664,25 +4684,19 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
             return false;
         }
 
-        if (setObjectFieldIfPresent(action, "g", hiddenHandler)) {
-            return true;
-        }
-        if (setObjectFieldIfPresent(action, "e", hiddenHandler)) {
-            return true;
-        }
-
-        // Fallback for future obfuscation: assign to any compatible visibility field.
+        // Require one exact typed field; Object fields are not evidence of visibility semantics.
+        Field target = null;
         for (Field field : action.getClass().getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers()) || field.getType() != hiddenVisibilityHandlerClass) continue;
+            if (target != null) return false;
+            target = field;
+        }
+        if (target != null) {
             try {
-                if (!field.getType().isAssignableFrom(hiddenVisibilityHandlerClass)) {
-                    continue;
-                }
-                field.setAccessible(true);
-                field.set(action, hiddenHandler);
+                target.setAccessible(true);
+                target.set(action, hiddenHandler);
                 return true;
-            } catch (Throwable ignored) {
-                // Continue probing compatible fields.
-            }
+            } catch (Throwable ignored) { }
         }
         return false;
     }
@@ -4731,6 +4745,16 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         XposedBridge.log(TAG + ": " + message);
         Log.d(TAG, message);
         appendRuntimeLog("D " + message);
+    }
+
+    private static void logDiscovery(String message) {
+        log(message);
+        if (!ENABLE_DEBUG_LOGS && (message.contains("failed") || message.contains("unavailable")
+                || message.contains("unresolved") || message.contains("matches=")
+                || message.contains("incomplete"))) {
+            // Compatibility failures remain diagnosable without writing personal/runtime data.
+            XposedBridge.log(TAG + ": " + message);
+        }
     }
 
     private static void logThrowable(String message, Throwable throwable) {

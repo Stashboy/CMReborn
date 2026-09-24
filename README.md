@@ -19,7 +19,7 @@ LSPosed/Xposed module for Google Messages (`com.google.android.apps.messaging`) 
 - Conversation-channel migration fallback for notification restoration
 
 ## Simple Usage Instructions
-- Install CMReborn v1.1.6 APK
+- Install the latest production CMReborn APK
 - Enable module in LSPosed/Vector
 - Hook to only Google Messages
 - Open Google Messages > Tap Search > Type helloworld (that's your covert message box)
@@ -49,6 +49,10 @@ LSPosed/Xposed module for Google Messages (`com.google.android.apps.messaging`) 
 | Runtime stability hardening | Uses bounded caches and safe context handling to reduce long-uptime drift and memory-retention risk. |
 
 ## Build
+
+Since v1.1.29, semantic hook discovery reduces updates caused solely by obfuscated
+class/member renaming. See [Hook discovery and maintenance](HOOK_DISCOVERY.md)
+for coverage, cache validation, and compatibility limits.
 
 Debug:
 

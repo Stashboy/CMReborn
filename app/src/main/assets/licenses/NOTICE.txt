@@ -1,0 +1,29 @@
+CMReborn third-party notices
+
+DexKit 2.3.0, Copyright (c) LuckyPray
+https://github.com/LuckyPray/DexKit/releases/tag/2.3.0
+Unmodified dependency: org.luckypray:dexkit:2.3.0
+Java/Kotlin wrapper: Apache License 2.0 (APACHE-2.0.txt).
+Native Core library: GNU LGPL version 3 (LGPL-3.0.txt and GPL-3.0.txt).
+Corresponding upstream source:
+https://github.com/LuckyPray/DexKit/tree/2.3.0
+https://github.com/LuckyPray/DexKit/archive/refs/tags/2.3.0.tar.gz
+
+CMReborn source and Gradle build scripts are available at:
+https://github.com/Stashboy/CMReborn
+The native library is dynamically loaded and is not modified by CMReborn.
+You may rebuild CMReborn against a modified DexKit dependency, replace its
+packaged native libraries, and re-sign/reinstall the resulting APK. CMReborn
+does not restrict reverse engineering for debugging modifications to DexKit.
+
+Kotlin standard library, Copyright JetBrains s.r.o. and Kotlin contributors
+https://github.com/JetBrains/kotlin
+Apache License 2.0 (APACHE-2.0.txt).
+
+JetBrains annotations, Copyright JetBrains s.r.o.
+https://github.com/JetBrains/java-annotations
+Apache License 2.0 (APACHE-2.0.txt).
+
+AndroidX annotations, Copyright The Android Open Source Project
+https://android.googlesource.com/platform/frameworks/support/+/androidx-main/annotation/
+Apache License 2.0 (APACHE-2.0.txt).
