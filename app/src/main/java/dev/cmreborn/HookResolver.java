@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
  * Obfuscated names are output, never inputs to a scan. Every result must be unique.
  */
 final class HookResolver {
-    private static final int SCHEMA = 2;
+    private static final int SCHEMA = 3;
     private static final String CONVERSATION_ID =
             "com.google.android.apps.messaging.shared.datamodel.data.datatypes.ConversationIdType";
     private static final String MESSAGE_ID =
@@ -55,14 +55,14 @@ final class HookResolver {
     private static final String FUTURE = "com.google.common.util.concurrent.ListenableFuture";
     private static final String[] REQUIRED_CLASSES = {"visibility", "collector", "viewConcrete",
             "viewAbstract", "immutableList", "immutableSet", "status", "reason", "archiveApi",
-            "metadata", "intent", "selection", "actionProvider"};
+            "metadata", "intent", "selection", "actionProvider", "searchPeer", "account"};
     private static final String[] REQUIRED_METHODS = {"profile", "searchHome", "category",
             "collectorSuccess", "collectorFailure", "conversationAdapter", "starredAdapter",
             "videoAdapter", "mediaAdapter", "linkAdapter", "locationAdapter", "suggestion",
             "contactAdapter", "contactTap", "keepPredicate", "archiveSingle", "archiveFlag",
-            "archiveList", "metadataUpdate", "metadataRefresh", "selectionUpdate"};
+            "archiveList", "metadataUpdate", "metadataRefresh", "selectionUpdate", "intentPopulate"};
     private static final String[] REQUIRED_FIELDS = {"viewStarred", "viewConversations",
-            "viewNoMatching", "viewSemantic"};
+            "viewNoMatching", "viewSemantic", "triggerPeer", "triggerAccount"};
     private final Properties entries = new Properties();
     private final ClassLoader loader;
     private final Consumer<String> log;
@@ -322,7 +322,42 @@ final class HookResolver {
         attempt("intent", () -> {
             ClassData c = uniqueClass("intent", ClassMatcher.create()
                     .usingStrings("AccountId was manually propagated. Use AccountIntents instead."));
-            if (c != null) saveClass("intent", c.getName());
+            if (c == null) return;
+            saveClass("intent", c.getName());
+            MethodData writer = uniqueMethod("intentPopulate", MethodMatcher.create()
+                    .declaredClass(c.getName()).modifiers(Modifier.STATIC)
+                    .returnType("void").paramCount(2)
+                    .usingStrings("account_id", "$tiktok$account_id_owned"));
+            if (writer == null) return;
+            Method method = writer.getMethodInstance(loader);
+            Class<?>[] params = method.getParameterTypes();
+            if (params[0] != android.content.Intent.class || params[1].isPrimitive()
+                    || params[1] == Object.class) return;
+            saveMethod("intentPopulate", writer);
+            saveClass("account", params[1].getName());
+        });
+        attempt("triggerAccount", () -> {
+            String account = className("account");
+            if (account == null) return;
+            ClassData peer = uniqueClass("searchPeer", ClassMatcher.create()
+                    .usingStrings("com/google/android/apps/messaging/ui/search/ZeroStateSearchFragmentPeer")
+                    .fields(FieldsMatcher.create().add(FieldMatcher.create().type(account))));
+            if (peer == null) return;
+            Class<?> peerType = peer.getInstance(loader);
+            Class<?> accountType = Class.forName(account, false, loader);
+            Class<?> searchBox = Class.forName(
+                    "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox", false, loader);
+            Field peerField = TriggerFields.peer(searchBox, peerType);
+            Field accountField = TriggerFields.account(peerType, accountType);
+            if (peerField == null || accountField == null) {
+                // No literal fallback may override a missing/ambiguous binding.
+                entries.setProperty("ambiguous.triggerAccount", "true");
+                log.accept("discovery triggerAccount unresolved; unique typed fields required");
+                return;
+            }
+            saveClass("searchPeer", peerType.getName());
+            saveField("triggerPeer", peerField);
+            saveField("triggerAccount", accountField);
         });
         attempt("selection", () -> {
             ClassData c = uniqueClass("selection", ClassMatcher.create()
@@ -381,6 +416,21 @@ final class HookResolver {
         Field field = new DexField(descriptor).getFieldInstance(loader);
         field.setAccessible(true);
         return field.get(target);
+    }
+
+    private void saveField(String role, Field field) {
+        String descriptor = new DexField(field).serialize();
+        entries.setProperty("field." + role, descriptor);
+        log.accept("discovery field " + role + "=" + descriptor);
+    }
+
+    Object triggerAccount(Object searchBox) throws Exception {
+        Object peer = field("triggerPeer", searchBox);
+        if (peer == null) return null;
+        Object account = field("triggerAccount", peer);
+        Method writer = method("intentPopulate");
+        return account != null && writer != null && writer.getParameterTypes()[1].isInstance(account)
+                ? account : null;
     }
 
     boolean hasViewFields() {

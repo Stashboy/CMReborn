@@ -17,6 +17,11 @@ or APK upload occurs on the device.
   AND its exact base APK SHA-256. Historical names are not tried on unknown builds.
 - Search view-data fields are mapped from adapter field reads; conversation row
   getters are resolved using conversation-ID and archive-status return types.
+- Since v1.1.30, the archive trigger also discovers the account-intent writer,
+  account type, search-fragment peer, and its unique account field. The input is
+  found by its resource name. It never selects the first non-null field among
+  historical letters: after Messages 323089063, the former account field holds
+  an unrelated provider. Cache schema 3 includes these additional bindings.
 - Android lifecycle hooks and background-work notification routing use Android
   API contracts and do not require obfuscated Messages class names.
 - A completed-future adapter recognizes the host's listener signature even when

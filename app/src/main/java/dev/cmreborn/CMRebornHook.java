@@ -757,11 +757,13 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                             if (!(searchBox instanceof View)) {
                                 return;
                             }
-                            Object inputObj = XposedHelpers.getObjectField(searchBox, "d");
-                            if (!(inputObj instanceof View)) {
+                            View root = (View) searchBox;
+                            int inputId = resourceId(root.getContext(), "id", "zero_state_search_box_auto_complete");
+                            View inputView = inputId != 0 ? root.findViewById(inputId) : null;
+                            if (!(inputView instanceof android.widget.TextView)) {
+                                log("search trigger input unavailable; expected named text input");
                                 return;
                             }
-                            View inputView = (View) inputObj;
                             Object marker = XposedHelpers.getAdditionalInstanceField(inputView,
                                     "cmreborn_search_trigger_watcher");
                             if (marker != null) {
@@ -786,9 +788,10 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                 public void afterTextChanged(Editable s) {
                                 }
                             };
-                            XposedHelpers.callMethod(inputObj, "addTextChangedListener", watcher);
+                            ((android.widget.TextView) inputView).addTextChangedListener(watcher);
                             XposedHelpers.setAdditionalInstanceField(inputView,
                                     "cmreborn_search_trigger_watcher", watcher);
+                            log("search trigger watcher attached to named input");
                         }
                     });
             log("hook installed: ZeroStateSearchBox.onFinishInflate trigger watcher");
@@ -811,16 +814,8 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
 
         Object account = null;
         try {
-            Object searchPeer = XposedHelpers.getObjectField(searchBox, "f");
-            if (searchPeer != null) {
-                account = readFieldIfPresent(searchPeer, "o");
-                if (account == null) {
-                    account = readFieldIfPresent(searchPeer, "n");
-                }
-                if (account == null) {
-                    account = readFieldIfPresent(searchPeer, "m");
-                }
-            }
+            if (hookResolver != null) account = hookResolver.triggerAccount(searchBox);
+            if (account != null) log("search trigger account resolved by validated field types");
         } catch (Throwable t) {
             logThrowable("search trigger account lookup failed", t);
         }
@@ -4394,24 +4389,30 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         if (helperClass == null) {
             return null;
         }
+        Method discovered = hookResolver != null ? hookResolver.method("intentPopulate") : null;
+        if (discovered != null && discovered.getDeclaringClass() == helperClass) {
+            return account == null || discovered.getParameterTypes()[1].isInstance(account)
+                    ? discovered : null;
+        }
+        if (hookResolver == null || !hookResolver.fallbackAllowed("intentPopulate")) return null;
+        java.util.ArrayList<Method> matches = new java.util.ArrayList<>();
         for (Method method : helperClass.getDeclaredMethods()) {
-            if ((method.getModifiers() & Modifier.STATIC) == 0) {
+            if ((method.getModifiers() & Modifier.STATIC) == 0 || method.getReturnType() != void.class) {
                 continue;
             }
             Class<?>[] parameterTypes = method.getParameterTypes();
             if (parameterTypes == null || parameterTypes.length != 2) {
                 continue;
             }
-            if (parameterTypes[0] != Intent.class
-                    && !parameterTypes[0].isAssignableFrom(Intent.class)) {
+            if (parameterTypes[0] != Intent.class) {
                 continue;
             }
             if (account != null && !parameterTypes[1].isAssignableFrom(account.getClass())) {
                 continue;
             }
-            return method;
+            matches.add(method);
         }
-        return null;
+        return ResolutionPolicy.unique(matches);
     }
 
     private static Method findNoArgMethodReturning(Class<?> targetClass, String methodName,
