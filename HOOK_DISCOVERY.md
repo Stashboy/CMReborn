@@ -21,7 +21,15 @@ or APK upload occurs on the device.
   account type, search-fragment peer, and its unique account field. The input is
   found by its resource name. It never selects the first non-null field among
   historical letters: after Messages 323089063, the former account field holds
-  an unrelated provider. Cache schema 3 includes these additional bindings.
+  an unrelated provider.
+- Since v1.1.31 (cache schema 4), the peer is matched structurally instead of by
+  the `ZeroStateSearchFragmentPeer` log string, which Messages 324451063 moved to
+  the fragment while keeping the account on the peer. The peer is the only class
+  holding both the resolved account type and a `ZeroStateSearchBox` field; the
+  trigger peer and account fields are then selected by unique type as before. The
+  same release re-pinned two diagnostics reformatted from slash paths to
+  `Class#method` labels: the search-result collector (`cannot get the id for
+  result.`) and the archive API (`ArchiveApiImpl#setStatusOnConversations`).
 - Android lifecycle hooks and background-work notification routing use Android
   API contracts and do not require obfuscated Messages class names.
 - A completed-future adapter recognizes the host's listener signature even when

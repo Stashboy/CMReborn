@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
  * Obfuscated names are output, never inputs to a scan. Every result must be unique.
  */
 final class HookResolver {
-    private static final int SCHEMA = 3;
+    private static final int SCHEMA = 4;
     private static final String CONVERSATION_ID =
             "com.google.android.apps.messaging.shared.datamodel.data.datatypes.ConversationIdType";
     private static final String MESSAGE_ID =
@@ -180,8 +180,10 @@ final class HookResolver {
                     .paramCount(0).returnType(FUTURE)), "b");
         });
         attempt("collector", () -> {
+            // Messages 324451063 dropped the "IcingSearchApiImpl$1" inner-class label; the
+            // result processor's error string is unique and still pins the collector class.
             ClassData c = uniqueClass("collector", ClassMatcher.create()
-                    .usingStrings("IcingSearchApiImpl$1", "cannot get the id for result."));
+                    .usingStrings("cannot get the id for result."));
             if (c == null) return;
             saveClass("collector", c.getName());
             List<MethodData> success = new ArrayList<>();
@@ -293,8 +295,10 @@ final class HookResolver {
         attempt("archiveApi", () -> {
             String status = className("status"), reason = className("reason"), list = className("immutableList");
             if (status == null || reason == null || list == null) return;
+            // Messages 324451063 reformatted the ArchiveApiImpl diagnostic from the slash path
+            // to a "Class#method" profiling label; the set-status method shape disambiguates it.
             ClassData c = uniqueClass("archiveApi", ClassMatcher.create()
-                    .usingStrings("com/google/android/apps/messaging/shared/util/archive/ArchiveApiImpl")
+                    .usingStrings("ArchiveApiImpl#setStatusOnConversations")
                     .methods(MethodsMatcher.create().add(MethodMatcher.create().returnType("boolean")
                             .paramTypes(CONVERSATION_ID, status, reason, "boolean"))));
             if (c == null) return;
@@ -339,9 +343,14 @@ final class HookResolver {
         attempt("triggerAccount", () -> {
             String account = className("account");
             if (account == null) return;
+            // Messages 324451063 moved the ZeroStateSearchFragmentPeer logging string onto the
+            // fragment while the account moved to its peer. The peer is the only class that holds
+            // both the account type and a ZeroStateSearchBox reference, so match it structurally.
             ClassData peer = uniqueClass("searchPeer", ClassMatcher.create()
-                    .usingStrings("com/google/android/apps/messaging/ui/search/ZeroStateSearchFragmentPeer")
-                    .fields(FieldsMatcher.create().add(FieldMatcher.create().type(account))));
+                    .fields(FieldsMatcher.create()
+                            .add(FieldMatcher.create().type(account))
+                            .add(FieldMatcher.create().type(
+                                    "com.google.android.apps.messaging.ui.search.ZeroStateSearchBox"))));
             if (peer == null) return;
             Class<?> peerType = peer.getInstance(loader);
             Class<?> accountType = Class.forName(account, false, loader);
