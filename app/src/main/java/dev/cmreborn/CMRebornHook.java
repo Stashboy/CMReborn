@@ -11,11 +11,16 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.telephony.PhoneNumberUtils;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -386,6 +391,7 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
                                 Rc03SearchHooks.install(classLoader);
                                 Rc03ArchivedSelectionHooks.install(classLoader);
                                 Rc03ArchiveStateHooks.install(classLoader);
+                                installExternalDenyArchive(classLoader);
                             }
                         });
                 attachHookInstalled = true;
@@ -400,6 +406,324 @@ public final class CMRebornHook implements IXposedHookLoadPackage {
         int id = context.getResources().getIdentifier(name, "id", TARGET_PACKAGE);
         return id == 0 ? -1 : id;
     }
+
+    // ===================================================================================
+    // External deny-list auto-archive + silent suppression.
+    //
+    // Reads a phone-number deny list from a COMPANION app's content provider. For any inbound
+    // Messages notification whose sender is on that list, the notification is suppressed and the
+    // conversation is moved to the Archived tab (which this module already keeps archived + hidden).
+    //
+    // The deny list is owned entirely by the companion app: if its provider is absent (i.e. the
+    // companion app is not installed, as on any device but the owner's), every query returns null and
+    // the whole feature stays inert — it never installs a hook or touches the database. That makes it
+    // self-scoping with no device identifiers in this (public) source.
+    //
+    // Suppression is done at android.app.NotificationManager.notify(...) — a stable framework method,
+    // so it needs no DexKit resolution and survives Messages updates. The conversation id and sender's
+    // normalized number are read straight from the posted Notification's extras.
+    // ===================================================================================
+    // The companion DND app mirrors its denied-numbers list into Settings.Global (newline-joined)
+    // because Google Messages cannot read the app's ContentProvider across the package-visibility
+    // boundary. Settings.Global is world-readable, so this is the reliable cross-app channel.
+    private static final String DENY_GLOBAL_KEY = "dnd_denied_numbers";
+    private static final String NOTIF_EXTRA_CONVERSATION_ID =
+            "extra_im_notification_conversation_id";
+    private static final String NOTIF_EXTRA_SENDER_NORMALIZED =
+            "extra_im_notification_participant_normalized_destination";
+    private static volatile boolean externalDenyInstalled;
+    private static volatile Set<String> denyNumbers = Collections.emptySet();
+    private static final Set<Long> deniedConversationIds =
+            Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
+
+    private static void installExternalDenyArchive(ClassLoader classLoader) {
+        if (externalDenyInstalled) {
+            return;
+        }
+        synchronized (CMRebornHook.class) {
+            if (externalDenyInstalled) {
+                return;
+            }
+            Context context = getRuntimeContext();
+            if (context == null) {
+                return;
+            }
+            // Probe the companion provider. A null result means it is absent (companion app not
+            // installed) -> leave the whole feature inert so other devices are unaffected.
+            Set<String> initial = loadDenyNumbers(context);
+            if (initial == null) {
+                log("external deny-list provider absent; archive feature inert");
+                return;
+            }
+            denyNumbers = initial;
+            externalDenyInstalled = true;
+
+            try {
+                context.getContentResolver().registerContentObserver(
+                        Settings.Global.getUriFor(DENY_GLOBAL_KEY), false,
+                        new ContentObserver(new Handler(Looper.getMainLooper())) {
+                            @Override
+                            public void onChange(boolean selfChange) {
+                                Context ctx = getRuntimeContext();
+                                if (ctx == null) {
+                                    return;
+                                }
+                                Set<String> updated = loadDenyNumbers(ctx);
+                                if (updated != null) {
+                                    denyNumbers = updated;
+                                    runDenySweepAsync();
+                                }
+                            }
+                        });
+            } catch (Throwable t) {
+                logThrowable("external deny-list observer registration failed", t);
+            }
+
+            installDeniedNotificationSuppression();
+            runDenySweepAsync();
+            log("external deny-list archive installed; deniedNumbers=" + denyNumbers.size());
+        }
+    }
+
+    /** Returns the deny-list numbers, or null if the companion app has not published a list. */
+    private static Set<String> loadDenyNumbers(Context context) {
+        String joined;
+        try {
+            joined = Settings.Global.getString(context.getContentResolver(), DENY_GLOBAL_KEY);
+        } catch (Throwable t) {
+            return null;
+        }
+        if (joined == null) {
+            return null; // companion app absent / list never published -> feature inert
+        }
+        LinkedHashSet<String> numbers = new LinkedHashSet<>();
+        for (String part : joined.split("\n")) {
+            String p = part.trim();
+            if (!p.isEmpty()) {
+                numbers.add(p);
+            }
+        }
+        return numbers;
+    }
+
+    private static void installDeniedNotificationSuppression() {
+        XC_MethodHook hook = new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) {
+                try {
+                    if (param.args == null || param.args.length == 0) {
+                        return;
+                    }
+                    Object last = param.args[param.args.length - 1];
+                    if (last instanceof Notification) {
+                        handleOutgoingNotification(param, (Notification) last);
+                    }
+                } catch (Throwable ignored) {
+                    // Never break the host app's own notifications.
+                }
+            }
+        };
+        try {
+            XposedHelpers.findAndHookMethod(NotificationManager.class, "notify",
+                    String.class, int.class, Notification.class, hook);
+            log("hook installed: NotificationManager.notify(String,int,Notification) deny suppression");
+        } catch (Throwable t) {
+            logThrowable("hook failed: NotificationManager.notify(String,int,Notification)", t);
+        }
+        try {
+            XposedHelpers.findAndHookMethod(NotificationManager.class, "notify",
+                    int.class, Notification.class, hook);
+        } catch (Throwable t) {
+            logThrowable("hook failed: NotificationManager.notify(int,Notification)", t);
+        }
+    }
+
+    private static void handleOutgoingNotification(XC_MethodHook.MethodHookParam param,
+            Notification notification) {
+        Set<String> deny = denyNumbers;
+        if (deny.isEmpty()) {
+            return; // feature inert when the deny list is empty
+        }
+        Bundle extras = notification.extras;
+        if (extras == null) {
+            return;
+        }
+        String conversationIdString = extras.getString(NOTIF_EXTRA_CONVERSATION_ID);
+        if (conversationIdString == null) {
+            return; // not a Messages incoming-message notification
+        }
+        long conversationId;
+        try {
+            conversationId = Long.parseLong(conversationIdString.trim());
+        } catch (Throwable t) {
+            return;
+        }
+        if (conversationId <= 0L) {
+            return;
+        }
+        String senderNormalized = extras.getString(NOTIF_EXTRA_SENDER_NORMALIZED);
+        boolean denied = numberMatchesDeny(deny, senderNormalized)
+                || deniedConversationIds.contains(Long.valueOf(conversationId));
+        if (!denied) {
+            return;
+        }
+        // Suppress the notification entirely (covert — including the first message).
+        param.setResult(null);
+        deniedConversationIds.add(Long.valueOf(conversationId));
+        archiveConversation(conversationId);
+        if (ENABLE_DEBUG_LOGS) {
+            log("deny suppress+archive conversation=" + conversationId
+                    + " sender=" + senderNormalized);
+        }
+    }
+
+    private static boolean numberMatchesDeny(Set<String> deny, String number) {
+        if (TextUtils.isEmpty(number) || deny.isEmpty()) {
+            return false;
+        }
+        for (String d : deny) {
+            try {
+                if (PhoneNumberUtils.compare(number, d)) {
+                    return true;
+                }
+            } catch (Throwable ignored) {
+                // Try next deny entry.
+            }
+        }
+        return false;
+    }
+
+    private static void archiveConversation(long conversationId) {
+        SQLiteDatabase database = null;
+        try {
+            database = openMessagesDatabase(true);
+            if (database == null) {
+                return;
+            }
+            ContentValues values = new ContentValues();
+            values.put("archive_status", Integer.valueOf(ARCHIVE_STATUS_ARCHIVED));
+            values.put("notification_enabled", Integer.valueOf(0));
+            database.update("conversations", values, "_id = ?",
+                    new String[]{String.valueOf(conversationId)});
+        } catch (Throwable t) {
+            logThrowable("archive denied conversation failed", t);
+        } finally {
+            closeQuietly(database);
+        }
+    }
+
+    private static void runDenySweepAsync() {
+        try {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    sweepExistingDeniedConversations();
+                }
+            }, "cmr-deny-sweep").start();
+        } catch (Throwable t) {
+            logThrowable("deny sweep thread failed", t);
+        }
+    }
+
+    /**
+     * Archive every already-existing conversation whose participant is on the deny list. Matching is
+     * tolerant (PhoneNumberUtils.compare) against the participants table, so it works regardless of
+     * how the deny number was formatted vs. how Messages normalized it.
+     */
+    private static void sweepExistingDeniedConversations() {
+        Set<String> deny = denyNumbers;
+        if (deny.isEmpty()) {
+            return;
+        }
+        SQLiteDatabase database = null;
+        Cursor cursor = null;
+        try {
+            database = openMessagesDatabase(true);
+            if (database == null) {
+                return;
+            }
+            java.util.ArrayList<Long> participantIds = new java.util.ArrayList<>();
+            cursor = database.rawQuery(
+                    "SELECT _id, normalized_destination, send_destination, comparable_destination "
+                            + "FROM participants", null);
+            while (cursor.moveToNext()) {
+                if (numberMatchesDeny(deny, cursor.getString(1))
+                        || numberMatchesDeny(deny, cursor.getString(2))
+                        || numberMatchesDeny(deny, cursor.getString(3))) {
+                    participantIds.add(Long.valueOf(cursor.getLong(0)));
+                }
+            }
+            cursor.close();
+            cursor = null;
+            if (participantIds.isEmpty()) {
+                return;
+            }
+            LinkedHashSet<Long> conversationIds = new LinkedHashSet<>();
+            for (Long participantId : participantIds) {
+                collectConversationsForParticipant(database, participantId.longValue(),
+                        conversationIds);
+            }
+            ContentValues values = new ContentValues();
+            values.put("archive_status", Integer.valueOf(ARCHIVE_STATUS_ARCHIVED));
+            values.put("notification_enabled", Integer.valueOf(0));
+            int archived = 0;
+            for (Long conversationId : conversationIds) {
+                deniedConversationIds.add(conversationId);
+                archived += database.update("conversations", values, "_id = ?",
+                        new String[]{String.valueOf(conversationId.longValue())});
+            }
+            if (ENABLE_DEBUG_LOGS) {
+                log("deny sweep archived=" + archived + " participants=" + participantIds.size());
+            }
+        } catch (Throwable t) {
+            logThrowable("deny sweep failed", t);
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (Throwable ignored) {
+                    // Ignore cursor close failures.
+                }
+            }
+            closeQuietly(database);
+        }
+    }
+
+    private static void collectConversationsForParticipant(SQLiteDatabase database,
+            long participantId, Set<Long> into) {
+        // Live join table first; fall back to the legacy table if it yields nothing.
+        if (queryConversationsForParticipant(database, "conversation_to_participants",
+                participantId, into)) {
+            return;
+        }
+        queryConversationsForParticipant(database, "conversation_participants", participantId, into);
+    }
+
+    private static boolean queryConversationsForParticipant(SQLiteDatabase database, String table,
+            long participantId, Set<Long> into) {
+        Cursor cursor = null;
+        boolean any = false;
+        try {
+            cursor = database.rawQuery("SELECT DISTINCT conversation_id FROM " + table
+                    + " WHERE participant_id = ?", new String[]{String.valueOf(participantId)});
+            while (cursor.moveToNext()) {
+                into.add(Long.valueOf(cursor.getLong(0)));
+                any = true;
+            }
+        } catch (Throwable ignored) {
+            // Table may not exist on this schema version.
+        } finally {
+            if (cursor != null) {
+                try {
+                    cursor.close();
+                } catch (Throwable ignored) {
+                    // Ignore cursor close failures.
+                }
+            }
+        }
+        return any;
+    }
+
 
     private static void applyResolvedTargets() {
         PROFILE_ARCHIVED_ACTION_PROVIDER_CLASS_CANDIDATES = hookResolver.classes("profile",
